@@ -38,7 +38,7 @@ export class Profile {
 
 @Schema({ _id: false })
 export class PasskeyCredential {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, sparse: true })
   credentialId: string;
 
   @Prop({ required: true })

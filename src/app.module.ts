@@ -17,6 +17,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { WebsocketModule } from './websocket/websocket.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AdminModule } from './admin/admin.module';
+import { SeederModule } from './seeder/seeder.module';
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -89,6 +90,7 @@ import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
     WebsocketModule,
     UploadsModule,
     AdminModule,
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [AppService],

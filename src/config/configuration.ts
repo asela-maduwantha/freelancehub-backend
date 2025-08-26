@@ -16,6 +16,11 @@ export default () => ({
     }
   },
   
+  seeder: {
+    autoSeed: process.env.AUTO_SEED === 'true',
+    forceReseed: process.env.FORCE_RESEED === 'true',
+  },
+  
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),

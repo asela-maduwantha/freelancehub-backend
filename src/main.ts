@@ -3,6 +3,7 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { SeederService } from './seeder/seeder.service';
 import * as compression from 'compression';
 import helmet from 'helmet';
 
@@ -92,6 +93,14 @@ async function bootstrap() {
   }
   
   const port = configService.get('port') || 3000;
+  
+  // Run database seeder if enabled
+  const autoSeed = configService.get('seeder.autoSeed');
+  if (autoSeed) {
+    const seederService = app.get(SeederService);
+    await seederService.seedDatabase();
+  }
+  
   await app.listen(port);
   
   console.log(`🚀 FreelanceHub backend is running on: http://localhost:${port}`);
