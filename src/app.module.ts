@@ -11,13 +11,13 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { ContractsModule } from './modules/contracts/contracts.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { WebsocketModule } from './websocket/websocket.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AdminModule } from './admin/admin.module';
-import { SeederModule } from './seeder/seeder.module';
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -83,14 +83,14 @@ import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
     // Feature modules
     AuthModule,
     ProjectsModule,
+    ContractsModule,
     PaymentsModule,
     MessagingModule,
     NotificationsModule,
     ReviewsModule,
     WebsocketModule,
     UploadsModule,
-    AdminModule,
-    SeederModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService],

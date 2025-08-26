@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Project, ProjectDocument } from '../../schemas/project.schema';
@@ -12,6 +12,7 @@ export class ProjectsService {
     @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
     @InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(forwardRef(() => 'ContractsService')) private contractsService?: any,
   ) {}
 
   async createProject(createProjectDto: CreateProjectDto, clientId: string): Promise<Project> {
@@ -283,7 +284,7 @@ export class ProjectsService {
       .exec();
   }
 
-  async acceptProposal(proposalId: string, clientId: string): Promise<{ success: boolean }> {
+  async acceptProposal(proposalId: string, clientId: string): Promise<{ success: boolean; contractId?: string }> {
     const proposal = await this.proposalModel
       .findById(proposalId)
       .populate('projectId')
@@ -309,6 +310,7 @@ export class ProjectsService {
     // Update proposal status
     await this.proposalModel.findByIdAndUpdate(proposalId, {
       status: 'accepted',
+      acceptedAt: new Date(),
       updatedAt: new Date(),
     });
 
@@ -332,7 +334,69 @@ export class ProjectsService {
       }
     );
 
-    return { success: true };
+    // Create contract automatically if ContractsService is available
+    let contractId: string | undefined;
+    if (this.contractsService) {
+      try {
+        // Convert proposal to contract data
+        const contractData = await this.generateContractFromProposal(proposal, project);
+        const contract = await this.contractsService.createContract(contractData, clientId);
+        contractId = contract._id.toString();
+        
+        // Update project with contract reference
+        await this.projectModel.findByIdAndUpdate(project._id, {
+          contract: contract._id,
+        });
+      } catch (error) {
+        console.error('Failed to create contract automatically:', error);
+        // Don't fail the proposal acceptance if contract creation fails
+      }
+    }
+
+    return { success: true, contractId };
+  }
+
+  // Helper method to convert proposal to contract data
+  private async generateContractFromProposal(proposal: any, project: any): Promise<any> {
+    const contractTerms = {
+      totalAmount: proposal.pricing.amount,
+      currency: proposal.pricing.currency || 'USD',
+      paymentType: proposal.pricing.type,
+      hourlyRate: proposal.pricing.type === 'hourly' ? proposal.pricing.amount : undefined,
+      estimatedHours: proposal.pricing.estimatedHours,
+      scope: project.description,
+      deliverables: project.deliverables || [project.description],
+      deadline: proposal.timeline?.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+      revisions: 2, // Default revisions
+      additionalTerms: proposal.coverLetter || '',
+    };
+
+    // Convert timeline milestones to contract milestones
+    const milestones = proposal.timeline?.milestones?.length > 0 
+      ? proposal.timeline.milestones.map((milestone: any) => ({
+          title: milestone.title,
+          description: milestone.description,
+          amount: milestone.amount,
+          dueDate: milestone.deliveryDate || milestone.dueDate,
+          deliverables: [milestone.description],
+        }))
+      : [
+          {
+            title: 'Project Completion',
+            description: 'Complete all project deliverables',
+            amount: proposal.pricing.amount,
+            dueDate: proposal.timeline?.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            deliverables: [project.description],
+          }
+        ];
+
+    return {
+      projectId: project._id.toString(),
+      freelancerId: proposal.freelancerId.toString(),
+      proposalId: proposal._id.toString(),
+      terms: contractTerms,
+      milestones,
+    };
   }
 
   async rejectProposal(proposalId: string, clientId: string): Promise<{ success: boolean }> {
