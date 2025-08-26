@@ -198,4 +198,91 @@ export class ProjectsController {
   async getProjectAnalytics(@Param('id') projectId: string, @Request() req: any) {
     return this.projectsService.getProjectAnalytics(projectId, req.user.id);
   }
+
+  // Public endpoints (no authentication required)
+  @Get('public')
+  @ApiOperation({ summary: 'Browse projects publicly (no authentication required)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'minBudget', required: false, type: Number })
+  @ApiQuery({ name: 'maxBudget', required: false, type: Number })
+  @ApiQuery({ name: 'projectType', required: false, enum: ['fixed', 'hourly'] })
+  @ApiQuery({ name: 'skills', required: false, type: String, description: 'Comma-separated skills' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Public projects retrieved successfully' })
+  async getPublicProjects(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 12,
+    @Query('category') category?: string,
+    @Query('minBudget') minBudget?: number,
+    @Query('maxBudget') maxBudget?: number,
+    @Query('projectType') projectType?: 'fixed' | 'hourly',
+    @Query('skills') skills?: string,
+  ) {
+    return this.projectsService.getPublicProjects({
+      page,
+      limit,
+      category,
+      minBudget,
+      maxBudget,
+      projectType,
+      skills: skills?.split(',').map(s => s.trim()),
+    });
+  }
+
+  @Get(':id/bookmark')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('freelancer')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bookmark a project' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Project bookmarked successfully' })
+  async bookmarkProject(@Param('id') projectId: string, @Request() req: any) {
+    return this.projectsService.bookmarkProject(projectId, req.user.id);
+  }
+
+  @Delete(':id/bookmark')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('freelancer')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove bookmark from project' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Bookmark removed successfully' })
+  async removeBookmark(@Param('id') projectId: string, @Request() req: any) {
+    return this.projectsService.removeBookmark(projectId, req.user.id);
+  }
+
+  @Get('recommended')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('freelancer')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get recommended projects for freelancer' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Recommended projects retrieved successfully' })
+  async getRecommendedProjects(@Request() req: any, @Query('limit') limit: number = 20) {
+    return this.projectsService.getRecommendedProjects(req.user.id, limit);
+  }
+
+  @Get('templates')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('client')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get project templates' })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Project templates retrieved successfully' })
+  async getProjectTemplates(@Query('category') category?: string) {
+    return this.projectsService.getProjectTemplates(category);
+  }
+
+  @Post(':id/invite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('client')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Invite freelancer to project' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Freelancer invited successfully' })
+  async inviteFreelancer(
+    @Param('id') projectId: string,
+    @Body() inviteDto: { freelancerId: string; message?: string },
+    @Request() req: any
+  ) {
+    return this.projectsService.inviteFreelancer(projectId, inviteDto.freelancerId, req.user.id, inviteDto.message);
+  }
 }

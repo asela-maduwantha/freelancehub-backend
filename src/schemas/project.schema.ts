@@ -164,6 +164,10 @@ export class Project {
 
   @Prop({ default: 0 })
   proposalsCount: number;
+
+  // Timestamps (automatically added by timestamps: true)
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

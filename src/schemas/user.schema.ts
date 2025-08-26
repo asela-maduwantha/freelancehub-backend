@@ -179,6 +179,35 @@ export class UserActivity {
   totalTimeSpent: number; // in seconds
 }
 
+// Client profile embedded schema
+@Schema({ _id: false })
+export class ClientProfile {
+  @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
+  favoriteFreelancers: Types.ObjectId[];
+
+  @Prop({ type: [Types.ObjectId], ref: 'Project', default: [] })
+  projectHistory: Types.ObjectId[];
+
+  @Prop({ default: 0 })
+  totalSpent: number;
+
+  @Prop({ default: 0 })
+  projectsPosted: number;
+}
+
+// Freelancer profile reference schema
+@Schema({ _id: false })
+export class FreelancerProfileRef {
+  @Prop({ type: [Types.ObjectId], ref: 'Project', default: [] })
+  bookmarkedProjects: Types.ObjectId[];
+
+  @Prop({ type: [String], default: [] })
+  skills: string[];
+
+  @Prop({ type: [String], default: [] })
+  categories: string[];
+}
+
 // Main User schema
 @Schema({ timestamps: true })
 export class User {
@@ -250,6 +279,17 @@ export class User {
 
   @Prop()
   stripeConnectedAccountId?: string;
+
+  // Role-specific profiles
+  @Prop({ type: ClientProfile })
+  clientProfile?: ClientProfile;
+
+  @Prop({ type: FreelancerProfileRef })
+  freelancerProfile?: FreelancerProfileRef;
+
+  // Timestamps (automatically added by timestamps: true)
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

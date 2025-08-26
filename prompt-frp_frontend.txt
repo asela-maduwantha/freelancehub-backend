@@ -1,0 +1,1047 @@
+# FreelanceHub Frontend UI Development Prompts
+
+## Overview
+This document contains comprehensive UI prompts for creating a modern freelance platform frontend with React/Next.js. The prompts are categorized by user roles and include corresponding backend API curl commands for implementation.
+
+---
+
+## 1. PUBLIC PAGES (No Authentication Required)
+
+### 1.1 Landing Page
+**Prompt:**
+Create a modern, responsive landing page for FreelanceHub with the following sections:
+- Hero section with compelling value proposition and CTA buttons for "Hire Freelancers" and "Find Work"
+- Features showcase highlighting platform benefits
+- How it works section (3-step process for both clients and freelancers)
+- Popular categories/skills grid
+- Success stories/testimonials carousel
+- Statistics counter (total projects, freelancers, clients)
+- Pricing/subscription plans preview
+- Footer with links to all pages
+
+**Design Requirements:**
+- Modern gradient backgrounds
+- Smooth scrolling animations
+- Mobile-first responsive design
+- Dark/light theme toggle
+- Loading states and micro-interactions
+
+**Curl Commands:**
+```bash
+# Get platform statistics for landing page
+curl -X GET "http://localhost:3000/v1/public/stats" \
+  -H "Content-Type: application/json"
+
+# Get popular categories
+curl -X GET "http://localhost:3000/v1/public/categories" \
+  -H "Content-Type: application/json"
+
+# Get featured testimonials
+curl -X GET "http://localhost:3000/v1/public/testimonials" \
+  -H "Content-Type: application/json"
+```
+
+### 1.2 Browse Projects Page (Public)
+**Prompt:**
+Create a public projects browsing page where visitors can explore available projects:
+- Advanced search and filtering system (category, budget range, project type, location)
+- Project cards showing title, description, budget, client rating, proposals count
+- Pagination or infinite scroll
+- Sort options (newest, budget high-to-low, etc.)
+- Map view toggle for location-based projects
+- Login prompt overlay for detailed view
+
+**Curl Commands:**
+```bash
+# Browse public projects with filters
+curl -X GET "http://localhost:3000/v1/projects/public?page=1&limit=12&category=web-development&minBudget=100&maxBudget=5000&projectType=fixed" \
+  -H "Content-Type: application/json"
+
+# Get project categories for filters
+curl -X GET "http://localhost:3000/v1/projects/categories" \
+  -H "Content-Type: application/json"
+```
+
+### 1.3 Browse Freelancers Page (Public)
+**Prompt:**
+Create a freelancer directory page for browsing talent:
+- Freelancer profile cards with photo, name, skills, rating, hourly rate
+- Skill-based filtering and search
+- Location and availability filters
+- Portfolio preview in cards
+- "View Full Profile" that prompts login for guests
+- Featured freelancers section
+
+**Curl Commands:**
+```bash
+# Browse freelancers publicly
+curl -X GET "http://localhost:3000/v1/freelancers/public?page=1&limit=12&skills=react,nodejs&location=colombo&minRate=10&maxRate=100" \
+  -H "Content-Type: application/json"
+
+# Get skills list for filtering
+curl -X GET "http://localhost:3000/v1/skills" \
+  -H "Content-Type: application/json"
+```
+
+---
+
+## 2. AUTHENTICATION PAGES
+
+### 2.1 Login Page
+**Prompt:**
+Create a modern login page with dual authentication methods:
+- Traditional email/password form with validation
+- WebAuthn/Passkey authentication option
+- Social login buttons (Google, LinkedIn, GitHub)
+- "Remember me" checkbox
+- Forgot password link
+- Switch to register form
+- Loading states and error handling
+
+**Design Requirements:**
+- Split-screen layout with illustration
+- Form validation with real-time feedback
+- Accessibility compliant
+- Progressive enhancement for WebAuthn
+
+**Curl Commands:**
+```bash
+# Traditional login
+curl -X POST "http://localhost:3000/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123!"
+  }'
+
+# Get WebAuthn challenge for login
+curl -X POST "http://localhost:3000/v1/auth/login/challenge" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identifier": "user@example.com"
+  }'
+
+# Verify WebAuthn login
+curl -X POST "http://localhost:3000/v1/auth/login/verify" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identifier": "user@example.com",
+    "authenticationResponse": {WebAuthn_response_object},
+    "challenge": "challenge_string"
+  }'
+```
+
+### 2.2 Registration Page
+**Prompt:**
+Create a comprehensive registration page with role selection:
+- Role selection (Freelancer/Client) with visual cards
+- Multi-step form with progress indicator
+- Step 1: Basic info (email, username, password, name)
+- Step 2: Profile details (phone, location, bio)
+- Step 3: Role-specific information (skills for freelancers, company for clients)
+- Step 4: Email verification
+- Terms acceptance and privacy policy
+- Form validation and error handling
+
+**Curl Commands:**
+```bash
+# Register new user
+curl -X POST "http://localhost:3000/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newuser@example.com",
+    "username": "newuser123",
+    "firstName": "John",
+    "lastName": "Doe",
+    "primaryRole": "freelancer",
+    "password": "SecurePass123!",
+    "phone": "+94701234567",
+    "location": {
+      "country": "Sri Lanka",
+      "city": "Colombo"
+    }
+  }'
+
+# Verify email
+curl -X POST "http://localhost:3000/v1/auth/verify-email" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newuser@example.com",
+    "token": "verification_token"
+  }'
+
+# Send email OTP
+curl -X POST "http://localhost:3000/v1/auth/send-email-otp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newuser@example.com",
+    "type": "verification"
+  }'
+```
+
+### 2.3 Password Reset Flow
+**Prompt:**
+Create password reset flow with modern UX:
+- Forgot password form with email input
+- Email sent confirmation page
+- Reset password form with token validation
+- Success confirmation page
+- Strong password requirements indicator
+- Resend email option
+
+**Curl Commands:**
+```bash
+# Request password reset
+curl -X POST "http://localhost:3000/v1/auth/forgot-password" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com"
+  }'
+
+# Reset password with OTP
+curl -X POST "http://localhost:3000/v1/auth/reset-password" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "otp": "123456",
+    "newPassword": "NewSecurePass123!"
+  }'
+```
+
+---
+
+## 3. FREELANCER DASHBOARD & PAGES
+
+### 3.1 Freelancer Dashboard
+**Prompt:**
+Create a comprehensive freelancer dashboard with:
+- Quick stats cards (active projects, pending proposals, earnings, profile views)
+- Recent activity feed
+- Upcoming deadlines and milestones
+- Quick actions (browse projects, send proposal, message client)
+- Earnings chart (daily/weekly/monthly view)
+- Recent messages preview
+- Project status overview
+- Profile completion progress
+
+**Curl Commands:**
+```bash
+# Get freelancer dashboard data
+curl -X GET "http://localhost:3000/v1/freelancer/dashboard" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get freelancer statistics
+curl -X GET "http://localhost:3000/v1/freelancer/stats" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get recent activity
+curl -X GET "http://localhost:3000/v1/freelancer/activity?limit=10" \
+  -H "Authorization: Bearer {access_token}"
+```
+
+### 3.2 Browse Projects (Freelancer View)
+**Prompt:**
+Create advanced project browsing for freelancers:
+- Enhanced search with saved filters
+- Project recommendation algorithm results
+- Detailed project cards with client info, requirements, budget
+- Proposal submission directly from browse page
+- Bookmark/save projects for later
+- Application tracking (applied, shortlisted, rejected)
+- Skills matching indicator
+
+**Curl Commands:**
+```bash
+# Browse projects as freelancer
+curl -X GET "http://localhost:3000/v1/projects?page=1&limit=20&category=development&minBudget=500" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get recommended projects
+curl -X GET "http://localhost:3000/v1/projects/recommended" \
+  -H "Authorization: Bearer {access_token}"
+
+# Save/bookmark project
+curl -X POST "http://localhost:3000/v1/projects/{projectId}/bookmark" \
+  -H "Authorization: Bearer {access_token}"
+```
+
+### 3.3 Proposal Management
+**Prompt:**
+Create proposal management system:
+- Proposal creation form with cover letter, pricing, timeline
+- Template library for quick proposals
+- Proposal tracking dashboard (sent, viewed, shortlisted, accepted, rejected)
+- Edit/withdraw proposals
+- Proposal analytics (view rate, response rate)
+- Follow-up reminders
+
+**Curl Commands:**
+```bash
+# Submit proposal
+curl -X POST "http://localhost:3000/v1/projects/{projectId}/proposals" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "coverLetter": "I am excited to work on this project...",
+    "pricing": {
+      "amount": 1500,
+      "currency": "USD"
+    },
+    "deliveryDays": 21,
+    "attachments": []
+  }'
+
+# Get freelancer proposals
+curl -X GET "http://localhost:3000/v1/freelancer/proposals?status=active&page=1" \
+  -H "Authorization: Bearer {access_token}"
+
+# Update proposal
+curl -X PUT "http://localhost:3000/v1/proposals/{proposalId}" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "coverLetter": "Updated proposal content...",
+    "pricing": {
+      "amount": 1800,
+      "currency": "USD"
+    }
+  }'
+```
+
+### 3.4 Active Projects Management
+**Prompt:**
+Create project management interface for freelancers:
+- Active projects overview with progress bars
+- Project details with client communication
+- Milestone tracking and submission
+- Time tracking with start/stop timer
+- File sharing and collaboration tools
+- Project timeline and deadlines
+- Contract details and scope
+
+**Curl Commands:**
+```bash
+# Get active projects
+curl -X GET "http://localhost:3000/v1/freelancer/projects/active" \
+  -H "Authorization: Bearer {access_token}"
+
+# Update project progress
+curl -X PUT "http://localhost:3000/v1/projects/{projectId}/progress" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "in_progress",
+    "progressPercentage": 65,
+    "notes": "Completed design phase, starting development"
+  }'
+
+# Submit milestone
+curl -X POST "http://localhost:3000/v1/projects/{projectId}/milestones/{milestoneId}/submit" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deliverables": [],
+    "description": "Milestone completed as per requirements"
+  }'
+```
+
+### 3.5 Freelancer Profile Management
+**Prompt:**
+Create comprehensive profile management:
+- Profile overview with photo, bio, skills, rates
+- Portfolio section with project showcases
+- Experience and education sections
+- Skills assessment and certifications
+- Availability calendar
+- Profile visibility settings
+- SEO optimization for profile discovery
+
+**Curl Commands:**
+```bash
+# Get freelancer profile
+curl -X GET "http://localhost:3000/v1/auth/me" \
+  -H "Authorization: Bearer {access_token}"
+
+# Update freelancer profile
+curl -X PUT "http://localhost:3000/v1/freelancer/profile" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bio": "Experienced full-stack developer...",
+    "hourlyRate": {
+      "amount": 50,
+      "currency": "USD"
+    },
+    "skills": ["React", "Node.js", "MongoDB"],
+    "availability": "full_time"
+  }'
+
+# Upload portfolio item
+curl -X POST "http://localhost:3000/v1/freelancer/portfolio" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: multipart/form-data" \
+  -F "title=E-commerce Website" \
+  -F "description=Modern e-commerce platform" \
+  -F "images=@screenshot1.jpg" \
+  -F "technologies=[\"React\", \"Node.js\"]"
+```
+
+### 3.6 Earnings & Financial Dashboard
+**Prompt:**
+Create financial management dashboard:
+- Earnings overview (daily, weekly, monthly, yearly)
+- Payment history with detailed transactions
+- Pending payments and invoices
+- Tax document generation
+- Earnings analytics with charts
+- Withdrawal/payout management
+- Financial goal tracking
+
+**Curl Commands:**
+```bash
+# Get earnings overview
+curl -X GET "http://localhost:3000/v1/freelancer/earnings?period=monthly&year=2024" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get payment history
+curl -X GET "http://localhost:3000/v1/freelancer/payments?page=1&limit=20" \
+  -H "Authorization: Bearer {access_token}"
+
+# Request payout
+curl -X POST "http://localhost:3000/v1/freelancer/payout" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 1500,
+    "paymentMethod": "bank_transfer"
+  }'
+```
+
+---
+
+## 4. CLIENT DASHBOARD & PAGES
+
+### 4.1 Client Dashboard
+**Prompt:**
+Create client-focused dashboard with:
+- Active projects overview with status indicators
+- Recent freelancer applications
+- Budget tracking and spending analytics
+- Quick post project button
+- Favorite freelancers list
+- Upcoming project deadlines
+- Team collaboration overview
+- Project performance metrics
+
+**Curl Commands:**
+```bash
+# Get client dashboard
+curl -X GET "http://localhost:3000/v1/client/dashboard" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get client statistics
+curl -X GET "http://localhost:3000/v1/client/stats" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get recent applications
+curl -X GET "http://localhost:3000/v1/client/recent-applications?limit=10" \
+  -H "Authorization: Bearer {access_token}"
+```
+
+### 4.2 Post Project
+**Prompt:**
+Create intuitive project posting wizard:
+- Multi-step project creation form
+- Step 1: Project basics (title, category, description)
+- Step 2: Requirements and skills needed
+- Step 3: Budget and timeline
+- Step 4: Additional preferences (location, freelancer level)
+- Step 5: Review and publish
+- Template library for common project types
+- AI-powered description assistance
+
+**Curl Commands:**
+```bash
+# Create new project
+curl -X POST "http://localhost:3000/v1/projects" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "E-commerce Website Development",
+    "description": "Need a modern e-commerce website...",
+    "category": "web_development",
+    "skills": ["React", "Node.js", "MongoDB"],
+    "budget": {
+      "type": "fixed",
+      "amount": 5000,
+      "currency": "USD"
+    },
+    "timeline": {
+      "duration": 30,
+      "unit": "days"
+    },
+    "projectType": "fixed"
+  }'
+
+# Get project templates
+curl -X GET "http://localhost:3000/v1/projects/templates?category=web_development" \
+  -H "Authorization: Bearer {access_token}"
+```
+
+### 4.3 Manage Projects
+**Prompt:**
+Create project management interface for clients:
+- Projects overview (active, completed, draft)
+- Project details with freelancer information
+- Proposal review and management
+- Milestone approval system
+- Communication hub with freelancers
+- Project timeline and progress tracking
+- Contract management
+
+**Curl Commands:**
+```bash
+# Get client projects
+curl -X GET "http://localhost:3000/v1/client/projects?status=active&page=1" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get project proposals
+curl -X GET "http://localhost:3000/v1/projects/{projectId}/proposals" \
+  -H "Authorization: Bearer {access_token}"
+
+# Accept proposal
+curl -X POST "http://localhost:3000/v1/projects/proposals/{proposalId}/accept" \
+  -H "Authorization: Bearer {access_token}"
+
+# Approve milestone
+curl -X POST "http://localhost:3000/v1/projects/{projectId}/milestones/{milestoneId}/approve" \
+  -H "Authorization: Bearer {access_token}"
+```
+
+### 4.4 Find Freelancers
+**Prompt:**
+Create advanced freelancer discovery system:
+- Smart search with filters (skills, rate, location, availability)
+- Freelancer comparison tool
+- Saved searches and alerts
+- Direct invitation system
+- Freelancer portfolio review
+- Rating and review analysis
+- Team building for multiple freelancers
+
+**Curl Commands:**
+```bash
+# Search freelancers
+curl -X GET "http://localhost:3000/v1/freelancers?skills=react,nodejs&minRate=20&maxRate=80&availability=available" \
+  -H "Authorization: Bearer {access_token}"
+
+# Invite freelancer to project
+curl -X POST "http://localhost:3000/v1/projects/{projectId}/invite" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "freelancerId": "freelancer_id",
+    "message": "I would like to invite you to work on this project..."
+  }'
+
+# Save freelancer to favorites
+curl -X POST "http://localhost:3000/v1/client/favorites/freelancers" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "freelancerId": "freelancer_id"
+  }'
+```
+
+### 4.5 Payment Management
+**Prompt:**
+Create payment management system for clients:
+- Payment dashboard with pending and completed payments
+- Escrow account management
+- Invoice generation and tracking
+- Payment method management
+- Dispute resolution interface
+- Payment history and analytics
+- Automatic payment setup
+
+**Curl Commands:**
+```bash
+# Create payment intent
+curl -X POST "http://localhost:3000/v1/payments/intent" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contractId": "contract_id",
+    "amount": 2500,
+    "currency": "USD",
+    "description": "Payment for website development"
+  }'
+
+# Get payment history
+curl -X GET "http://localhost:3000/v1/client/payments?page=1&limit=20" \
+  -H "Authorization: Bearer {access_token}"
+
+# Process milestone payment
+curl -X POST "http://localhost:3000/v1/payments/milestone" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "milestoneId": "milestone_id",
+    "amount": 1250
+  }'
+```
+
+---
+
+## 5. SHARED USER FEATURES
+
+### 5.1 Messaging System
+**Prompt:**
+Create real-time messaging interface:
+- Chat list with recent conversations
+- Real-time messaging with WebSocket support
+- File sharing and attachments
+- Message search and filtering
+- Online status indicators
+- Message reactions and threading
+- Video call integration
+- Message encryption indicators
+
+**Curl Commands:**
+```bash
+# Send message
+curl -X POST "http://localhost:3000/v1/messaging/messages" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "receiverId": "user_id",
+    "content": "Hello, I wanted to discuss the project requirements...",
+    "type": "text"
+  }'
+
+# Get conversations
+curl -X GET "http://localhost:3000/v1/messaging/conversations?page=1&limit=20" \
+  -H "Authorization: Bearer {access_token}"
+
+# Get conversation messages
+curl -X GET "http://localhost:3000/v1/messaging/conversations/{conversationId}/messages?page=1" \
+  -H "Authorization: Bearer {access_token}"
+```
+
+### 5.2 Notifications Center
+**Prompt:**
+Create comprehensive notifications system:
+- Notification center with categorized notifications
+- Real-time notifications with sound/visual alerts
+- Notification preferences and settings
+- Mark as read/unread functionality
+- Notification history and search
+- Push notification settings
+- Email notification preferences
+
+**Curl Commands:**
+```bash
+# Get notifications
+curl -X GET "http://localhost:3000/v1/notifications?page=1&limit=20&status=unread" \
+  -H "Authorization: Bearer {access_token}"
+
+# Mark notification as read
+curl -X PUT "http://localhost:3000/v1/notifications/{notificationId}/read" \
+  -H "Authorization: Bearer {access_token}"
+
+# Update notification preferences
+curl -X PUT "http://localhost:3000/v1/notifications/preferences" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": {
+      "projectUpdates": true,
+      "messages": true,
+      "payments": true
+    },
+    "push": {
+      "projectUpdates": false,
+      "messages": true,
+      "payments": true
+    }
+  }'
+```
+
+### 5.3 Reviews & Ratings
+**Prompt:**
+Create review and rating system:
+- Leave review form with star ratings and comments
+- Review display with filtering and sorting
+- Response to reviews functionality
+- Review analytics and insights
+- Review verification badges
+- Review request automation
+- Dispute resolution for reviews
+
+**Curl Commands:**
+```bash
+# Create review
+curl -X POST "http://localhost:3000/v1/reviews" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectId": "project_id",
+    "rating": 5,
+    "title": "Excellent work!",
+    "comment": "The freelancer delivered exceptional work on time...",
+    "categories": {
+      "communication": 5,
+      "quality": 5,
+      "timeline": 4
+    }
+  }'
+
+# Get reviews
+curl -X GET "http://localhost:3000/v1/reviews?userId=user_id&page=1&limit=10" \
+  -H "Authorization: Bearer {access_token}"
+
+# Respond to review
+curl -X POST "http://localhost:3000/v1/reviews/{reviewId}/response" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "response": "Thank you for the kind words! It was a pleasure working with you."
+  }'
+```
+
+### 5.4 File Upload & Management
+**Prompt:**
+Create file management system:
+- Drag-and-drop file upload interface
+- File preview for images, documents, videos
+- File organization with folders and tags
+- File sharing with permission controls
+- Version control for files
+- File compression and optimization
+- Cloud storage integration
+
+**Curl Commands:**
+```bash
+# Upload single file
+curl -X POST "http://localhost:3000/uploads/single" \
+  -H "Authorization: Bearer {access_token}" \
+  -F "file=@document.pdf" \
+  -F "category=project_file"
+
+# Upload multiple files
+curl -X POST "http://localhost:3000/uploads/multiple" \
+  -H "Authorization: Bearer {access_token}" \
+  -F "files=@image1.jpg" \
+  -F "files=@image2.jpg" \
+  -F "category=portfolio"
+
+# Get user files
+curl -X GET "http://localhost:3000/uploads/user-files?category=project_file&page=1" \
+  -H "Authorization: Bearer {access_token}"
+```
+
+### 5.5 Settings & Preferences
+**Prompt:**
+Create comprehensive settings management:
+- Account settings (profile, password, email)
+- Privacy settings and data controls
+- Notification preferences
+- Payment methods and billing
+- Security settings (2FA, login sessions)
+- Theme and appearance preferences
+- Language and localization
+- Account deletion and data export
+
+**Curl Commands:**
+```bash
+# Update profile settings
+curl -X PUT "http://localhost:3000/v1/auth/profile" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "John",
+    "lastName": "Doe",
+    "phone": "+94701234567",
+    "location": {
+      "country": "Sri Lanka",
+      "city": "Colombo"
+    }
+  }'
+
+# Change password
+curl -X PUT "http://localhost:3000/v1/auth/change-password" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currentPassword": "oldPassword123!",
+    "newPassword": "newPassword123!"
+  }'
+
+# Update privacy settings
+curl -X PUT "http://localhost:3000/v1/auth/privacy" \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "profileVisibility": "public",
+    "showLocation": true,
+    "showContactInfo": false
+  }'
+```
+
+---
+
+## 6. ADMIN PANEL
+
+### 6.1 Admin Dashboard
+**Prompt:**
+Create comprehensive admin dashboard:
+- Platform overview with key metrics
+- Real-time statistics (users, projects, revenue)
+- Recent activity feed
+- System health monitoring
+- Quick action buttons for common tasks
+- Revenue analytics with charts
+- User growth metrics
+- Alert system for important events
+
+**Curl Commands:**
+```bash
+# Get admin dashboard stats
+curl -X GET "http://localhost:3000/admin/dashboard/stats" \
+  -H "Authorization: Bearer {admin_access_token}"
+
+# Get platform analytics
+curl -X GET "http://localhost:3000/admin/analytics?period=monthly&year=2024" \
+  -H "Authorization: Bearer {admin_access_token}"
+
+# Get system health
+curl -X GET "http://localhost:3000/admin/system/health" \
+  -H "Authorization: Bearer {admin_access_token}"
+```
+
+### 6.2 User Management
+**Prompt:**
+Create user management interface:
+- User list with search and filtering
+- User profile details and activity
+- Account status management (active, suspended, banned)
+- User verification and KYC management
+- User communication tools
+- Bulk operations for user management
+- User analytics and insights
+
+**Curl Commands:**
+```bash
+# Get users list
+curl -X GET "http://localhost:3000/admin/users?page=1&limit=20&role=freelancer&status=active" \
+  -H "Authorization: Bearer {admin_access_token}"
+
+# Get user details
+curl -X GET "http://localhost:3000/admin/users/{userId}" \
+  -H "Authorization: Bearer {admin_access_token}"
+
+# Update user status
+curl -X PUT "http://localhost:3000/admin/users/{userId}/status" \
+  -H "Authorization: Bearer {admin_access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "suspended",
+    "reason": "Policy violation"
+  }'
+```
+
+### 6.3 Project Management
+**Prompt:**
+Create admin project oversight:
+- Project monitoring dashboard
+- Project approval workflow
+- Dispute resolution center
+- Project analytics and reporting
+- Quality control and flagging system
+- Project category management
+- Featured projects management
+
+**Curl Commands:**
+```bash
+# Get projects for admin review
+curl -X GET "http://localhost:3000/admin/projects?status=pending&page=1" \
+  -H "Authorization: Bearer {admin_access_token}"
+
+# Approve/reject project
+curl -X PUT "http://localhost:3000/admin/projects/{projectId}/status" \
+  -H "Authorization: Bearer {admin_access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "approved",
+    "notes": "Project meets platform guidelines"
+  }'
+
+# Handle dispute
+curl -X POST "http://localhost:3000/admin/disputes/{disputeId}/resolve" \
+  -H "Authorization: Bearer {admin_access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resolution": "favor_client",
+    "notes": "Evidence supports client claim"
+  }'
+```
+
+### 6.4 Financial Management
+**Prompt:**
+Create financial oversight dashboard:
+- Revenue tracking and analytics
+- Transaction monitoring
+- Payment processing oversight
+- Fee and commission management
+- Payout approval system
+- Financial reporting tools
+- Fraud detection and prevention
+
+**Curl Commands:**
+```bash
+# Get financial overview
+curl -X GET "http://localhost:3000/admin/finance/overview?period=monthly" \
+  -H "Authorization: Bearer {admin_access_token}"
+
+# Get transaction details
+curl -X GET "http://localhost:3000/admin/finance/transactions?page=1&limit=50" \
+  -H "Authorization: Bearer {admin_access_token}"
+
+# Approve payout
+curl -X PUT "http://localhost:3000/admin/finance/payouts/{payoutId}/approve" \
+  -H "Authorization: Bearer {admin_access_token}"
+```
+
+### 6.5 Content Management
+**Prompt:**
+Create content management system:
+- Platform content editing (terms, policies, help)
+- Category and skill management
+- Featured content management
+- SEO content optimization
+- Multilingual content support
+- Content approval workflow
+- Blog and news management
+
+**Curl Commands:**
+```bash
+# Update platform content
+curl -X PUT "http://localhost:3000/admin/content/terms-of-service" \
+  -H "Authorization: Bearer {admin_access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Updated terms of service content...",
+    "version": "2.1"
+  }'
+
+# Manage categories
+curl -X POST "http://localhost:3000/admin/categories" \
+  -H "Authorization: Bearer {admin_access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "AI/Machine Learning",
+    "description": "Projects related to AI and ML",
+    "icon": "brain",
+    "featured": true
+  }'
+
+# Manage skills
+curl -X POST "http://localhost:3000/admin/skills" \
+  -H "Authorization: Bearer {admin_access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Python",
+    "category": "programming",
+    "popularity": 95
+  }'
+```
+
+---
+
+## 7. ADDITIONAL FEATURES
+
+### 7.1 Help & Support Center
+**Prompt:**
+Create comprehensive help system:
+- FAQ section with search functionality
+- Help articles with categories
+- Contact support form
+- Live chat integration
+- Video tutorials and guides
+- Community forum
+- Knowledge base with voting system
+
+### 7.2 Mobile App Interfaces
+**Prompt:**
+Create mobile-responsive versions of all above interfaces with:
+- Touch-optimized navigation
+- Mobile-specific interactions
+- Offline capability where applicable
+- Push notifications
+- Camera integration for file uploads
+- Mobile payment integration
+
+### 7.3 Advanced Analytics Dashboard
+**Prompt:**
+Create analytics interfaces for users:
+- Performance metrics and insights
+- Revenue/earnings analytics
+- Profile view analytics
+- Project success metrics
+- Comparative analytics with platform averages
+- Goal setting and tracking
+
+---
+
+## Implementation Guidelines
+
+### Design System Requirements:
+- Use consistent color scheme and typography
+- Implement dark/light theme support
+- Ensure accessibility (WCAG 2.1 AA compliance)
+- Mobile-first responsive design
+- Loading states and skeleton screens
+- Error handling with user-friendly messages
+- Form validation with real-time feedback
+
+### Technical Requirements:
+- React/Next.js with TypeScript
+- Tailwind CSS for styling
+- React Query for API state management
+- Socket.io for real-time features
+- React Hook Form for form handling
+- Chart.js/Recharts for analytics
+- React Router for navigation
+
+### Security Considerations:
+- Input sanitization and validation
+- XSS protection
+- CSRF protection
+- Secure file upload handling
+- Rate limiting on forms
+- Secure authentication token handling
+
+### Performance Optimization:
+- Code splitting and lazy loading
+- Image optimization
+- Caching strategies
+- Bundle size optimization
+- SEO optimization
+- Core Web Vitals optimization
+
+---
+
+## API Base URL Configuration
+Replace `http://localhost:3000` with your production API URL when deploying. All endpoints assume this base URL structure.
+
+## Authentication Header
+Most authenticated endpoints require the Authorization header:
+```
+Authorization: Bearer {access_token}
+```
+
+Replace `{access_token}` with the actual JWT token received from login.
+
+---
+
+*This document provides comprehensive UI development prompts for a complete freelance platform. Each section includes detailed requirements, design considerations, and corresponding backend API integration commands.*

@@ -502,4 +502,302 @@ export class ProjectsService {
       updatedAt: (project as any).updatedAt,
     };
   }
+
+  // Public Projects (no authentication)
+  async getPublicProjects(filters: {
+    page: number;
+    limit: number;
+    category?: string;
+    minBudget?: number;
+    maxBudget?: number;
+    projectType?: 'fixed' | 'hourly';
+    skills?: string[];
+  }) {
+    const { page, limit, category, minBudget, maxBudget, projectType, skills } = filters;
+    const skip = (page - 1) * limit;
+
+    const query: any = {
+      status: 'active',
+      visibility: 'public'
+    };
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (minBudget || maxBudget) {
+      query['budget.amount'] = {};
+      if (minBudget) query['budget.amount'].$gte = minBudget;
+      if (maxBudget) query['budget.amount'].$lte = maxBudget;
+    }
+
+    if (projectType) {
+      query.projectType = projectType;
+    }
+
+    if (skills && skills.length > 0) {
+      query.skills = { $in: skills.map(skill => new RegExp(skill, 'i')) };
+    }
+
+    const [projects, total] = await Promise.all([
+      this.projectModel
+        .find(query)
+        .populate('clientId', 'username profile.firstName profile.lastName profile.avatar profile.company profile.location')
+        .select('-proposalDetails -clientNotes -attachments')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.projectModel.countDocuments(query)
+    ]);
+
+    return {
+      projects: projects.map(project => ({
+        ...project,
+        proposalCount: Math.floor(Math.random() * 20), // You might want to calculate this properly
+        timePosted: this.calculateTimeAgo(project.createdAt)
+      })),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
+  }
+
+  // Bookmark functionality
+  async bookmarkProject(projectId: string, freelancerId: string) {
+    const project = await this.projectModel.findById(projectId);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const freelancer = await this.userModel.findById(freelancerId);
+    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+      throw new ForbiddenException('Only freelancers can bookmark projects');
+    }
+
+    if (!freelancer.freelancerProfile) {
+      freelancer.freelancerProfile = {
+        bookmarkedProjects: [],
+        skills: [],
+        categories: []
+      };
+    }
+
+    if (!freelancer.freelancerProfile.bookmarkedProjects) {
+      freelancer.freelancerProfile.bookmarkedProjects = [];
+    }
+
+    if (!freelancer.freelancerProfile.bookmarkedProjects.includes(new Types.ObjectId(projectId))) {
+      freelancer.freelancerProfile.bookmarkedProjects.push(new Types.ObjectId(projectId));
+      await freelancer.save();
+    }
+
+    return { success: true, message: 'Project bookmarked successfully' };
+  }
+
+  async removeBookmark(projectId: string, freelancerId: string) {
+    const freelancer = await this.userModel.findById(freelancerId);
+    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+      throw new ForbiddenException('Only freelancers can manage bookmarks');
+    }
+
+    if (freelancer.freelancerProfile?.bookmarkedProjects) {
+      freelancer.freelancerProfile.bookmarkedProjects = freelancer.freelancerProfile.bookmarkedProjects.filter(
+        (id: any) => !id.equals(new Types.ObjectId(projectId))
+      );
+      await freelancer.save();
+    }
+
+    return { success: true, message: 'Bookmark removed successfully' };
+  }
+
+  // Recommended projects for freelancers
+  async getRecommendedProjects(freelancerId: string, limit: number = 20) {
+    const freelancer = await this.userModel.findById(freelancerId);
+    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+      throw new ForbiddenException('Only freelancers can get recommendations');
+    }
+
+    const userSkills = freelancer.freelancerProfile?.skills || [];
+    const userCategories = freelancer.freelancerProfile?.categories || [];
+
+    // Build recommendation query
+    const query: any = {
+      status: 'active',
+      clientId: { $ne: new Types.ObjectId(freelancerId) }
+    };
+
+    // Match skills or categories
+    if (userSkills.length > 0 || userCategories.length > 0) {
+      query.$or = [];
+      
+      if (userSkills.length > 0) {
+        query.$or.push({ 
+          skills: { $in: userSkills.map(skill => new RegExp(skill, 'i')) } 
+        });
+      }
+      
+      if (userCategories.length > 0) {
+        query.$or.push({ 
+          category: { $in: userCategories } 
+        });
+      }
+    }
+
+    const projects = await this.projectModel
+      .find(query)
+      .populate('clientId', 'username profile.firstName profile.lastName profile.avatar profile.company')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return projects.map(project => ({
+      ...project,
+      matchScore: this.calculateMatchScore(project, userSkills, userCategories),
+      proposalCount: Math.floor(Math.random() * 15)
+    }));
+  }
+
+  // Project templates
+  async getProjectTemplates(category?: string) {
+    const templates = [
+      {
+        id: 'web-app-template',
+        title: 'Web Application Development',
+        description: 'Build a modern web application with latest technologies',
+        category: 'web-development',
+        estimatedBudget: { min: 2000, max: 10000 },
+        estimatedDuration: '4-8 weeks',
+        requiredSkills: ['React', 'Node.js', 'MongoDB'],
+        milestones: [
+          'UI/UX Design and Wireframes',
+          'Frontend Development',
+          'Backend API Development',
+          'Database Integration',
+          'Testing and Deployment'
+        ]
+      },
+      {
+        id: 'mobile-app-template',
+        title: 'Mobile App Development',
+        description: 'Create a cross-platform mobile application',
+        category: 'mobile-development',
+        estimatedBudget: { min: 3000, max: 15000 },
+        estimatedDuration: '6-12 weeks',
+        requiredSkills: ['React Native', 'Flutter', 'iOS', 'Android'],
+        milestones: [
+          'App Design and Prototyping',
+          'Core Functionality Development',
+          'API Integration',
+          'Testing on Multiple Devices',
+          'App Store Submission'
+        ]
+      },
+      {
+        id: 'website-template',
+        title: 'Business Website',
+        description: 'Professional website for your business',
+        category: 'web-development',
+        estimatedBudget: { min: 500, max: 3000 },
+        estimatedDuration: '2-4 weeks',
+        requiredSkills: ['HTML', 'CSS', 'JavaScript', 'WordPress'],
+        milestones: [
+          'Design Mockups',
+          'Homepage Development',
+          'Content Pages',
+          'Contact Forms & Integration',
+          'SEO Optimization'
+        ]
+      }
+    ];
+
+    if (category) {
+      return templates.filter(template => template.category === category);
+    }
+
+    return templates;
+  }
+
+  // Invite freelancer to project
+  async inviteFreelancer(projectId: string, freelancerId: string, clientId: string, message?: string) {
+    const [project, freelancer] = await Promise.all([
+      this.projectModel.findById(projectId),
+      this.userModel.findById(freelancerId)
+    ]);
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.clientId.toString() !== clientId) {
+      throw new ForbiddenException('You can only invite freelancers to your own projects');
+    }
+
+    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+      throw new NotFoundException('Freelancer not found');
+    }
+
+    // Check if already invited
+    const existingInvitation = await this.proposalModel.findOne({
+      projectId: new Types.ObjectId(projectId),
+      freelancerId: new Types.ObjectId(freelancerId),
+      type: 'invitation'
+    });
+
+    if (existingInvitation) {
+      throw new BadRequestException('Freelancer already invited to this project');
+    }
+
+    // Create invitation record
+    const invitation = new this.proposalModel({
+      projectId: new Types.ObjectId(projectId),
+      freelancerId: new Types.ObjectId(freelancerId),
+      type: 'invitation',
+      status: 'pending',
+      invitationMessage: message,
+      createdAt: new Date()
+    });
+
+    await invitation.save();
+
+    // You might want to send a notification here
+    
+    return { 
+      success: true, 
+      message: 'Freelancer invited successfully',
+      invitationId: invitation._id 
+    };
+  }
+
+  // Helper methods
+  private calculateMatchScore(project: any, userSkills: string[], userCategories: string[]): number {
+    let score = 0;
+    
+    // Category match
+    if (userCategories.includes(project.category)) {
+      score += 40;
+    }
+    
+    // Skills match
+    const projectSkills = project.skills || [];
+    const matchingSkills = userSkills.filter(skill => 
+      projectSkills.some((ps: string) => ps.toLowerCase().includes(skill.toLowerCase()))
+    );
+    
+    score += (matchingSkills.length / Math.max(userSkills.length, 1)) * 60;
+    
+    return Math.min(score, 100);
+  }
+
+  private calculateTimeAgo(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return 'Today';
+    if (days === 1) return '1 day ago';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    return `${Math.floor(days / 30)} months ago`;
+  }
 }

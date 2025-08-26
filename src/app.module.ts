@@ -18,6 +18,9 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { WebsocketModule } from './websocket/websocket.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AdminModule } from './admin/admin.module';
+import { PublicModule } from './public/public.module';
+import { FreelancerModule } from './freelancer/freelancer.module';
+import { ClientModule } from './client/client.module';
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -90,7 +93,10 @@ import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
     ReviewsModule,
     WebsocketModule,
     UploadsModule,
-    AdminModule
+    AdminModule,
+    PublicModule,
+    FreelancerModule,
+    ClientModule
   ],
   controllers: [AppController],
   providers: [AppService],
