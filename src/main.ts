@@ -18,7 +18,7 @@ async function bootstrap() {
   // API versioning
   app.enableVersioning({
     type: VersioningType.URI,
-    defaultVersion: configService.get('apiVersion') || 'v1',
+    defaultVersion: configService.get('apiVersion') || '1',
   });
   
   // Security middleware
@@ -77,8 +77,7 @@ async function bootstrap() {
       .addTag('Payments', 'Payment processing and escrow')
       .addTag('Messages', 'Real-time messaging system')
       .addTag('Reviews', 'Review and rating system')
-      .addTag('Users', 'User profile management')
-      .addServer(configService.get('frontend.url') || 'http://localhost:3001', 'Development server')
+      .addServer(configService.get('frontend.url') || 'http://localhost:3000', 'Development server')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
