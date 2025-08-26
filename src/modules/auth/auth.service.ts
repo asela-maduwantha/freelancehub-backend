@@ -21,13 +21,18 @@ import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 
 import { User, UserDocument } from '../../schemas/user.schema';
+import { EmailService } from '../../services/email.service';
 import { 
   RegisterUserDto, 
   LoginChallengeDto, 
   VerifyAuthenticationDto, 
   RegisterPasskeyDto,
   VerifyEmailDto,
+  SendEmailOtpDto,
+  VerifyEmailOtpDto,
   Enable2FADto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
   LoginResponse 
 } from '../../dto/auth.dto';
 
@@ -39,6 +44,7 @@ export class AuthService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterUserDto): Promise<{ message: string; verificationRequired: boolean }> {
@@ -423,5 +429,205 @@ export class AuthService {
     }
 
     return { success: true };
+  }
+
+  // OTP-based methods
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async sendEmailOtp(sendOtpDto: SendEmailOtpDto): Promise<{ message: string; expiresIn: number }> {
+    const { email, type } = sendOtpDto;
+    
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Email not found');
+    }
+
+    // Check rate limiting
+    const now = new Date();
+    const oneMinute = 60 * 1000;
+    
+    if (type === 'verification') {
+      // Check if already verified
+      if (user.verification.emailVerified) {
+        throw new BadRequestException('Email already verified');
+      }
+      
+      // Check rate limiting for email verification
+      if (user.verification.emailOtpExpires && user.verification.emailOtpExpires > now) {
+        const timeLeft = Math.ceil((user.verification.emailOtpExpires.getTime() - now.getTime()) / oneMinute);
+        throw new BadRequestException(`Please wait ${timeLeft} minutes before requesting a new OTP`);
+      }
+    } else if (type === 'password_reset') {
+      // Check rate limiting for password reset
+      if (user.verification.passwordResetOtpExpires && user.verification.passwordResetOtpExpires > now) {
+        const timeLeft = Math.ceil((user.verification.passwordResetOtpExpires.getTime() - now.getTime()) / oneMinute);
+        throw new BadRequestException(`Please wait ${timeLeft} minutes before requesting a new OTP`);
+      }
+    }
+
+    const otp = this.generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    if (type === 'verification') {
+      user.verification.emailOtp = await bcrypt.hash(otp, 10);
+      user.verification.emailOtpExpires = expiresAt;
+      user.verification.emailOtpAttempts = 0;
+      
+      await user.save();
+      await this.emailService.sendEmailVerificationOtp(email, otp, user.profile.firstName);
+    } else if (type === 'password_reset') {
+      user.verification.passwordResetOtp = await bcrypt.hash(otp, 10);
+      user.verification.passwordResetOtpExpires = expiresAt;
+      user.verification.passwordResetOtpAttempts = 0;
+      
+      await user.save();
+      await this.emailService.sendPasswordResetOtp(email, otp, user.profile.firstName);
+    }
+
+    return {
+      message: `OTP sent to ${email}`,
+      expiresIn: 600 // 10 minutes in seconds
+    };
+  }
+
+  async verifyEmailOtp(verifyOtpDto: VerifyEmailOtpDto): Promise<{ success: boolean; message: string }> {
+    const { email, otp } = verifyOtpDto;
+    
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Email not found');
+    }
+
+    if (user.verification.emailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    if (!user.verification.emailOtp || !user.verification.emailOtpExpires) {
+      throw new BadRequestException('No OTP found. Please request a new one.');
+    }
+
+    if (user.verification.emailOtpExpires < new Date()) {
+      throw new BadRequestException('OTP has expired. Please request a new one.');
+    }
+
+    // Check attempt limit
+    if ((user.verification.emailOtpAttempts || 0) >= 5) {
+      throw new BadRequestException('Too many invalid attempts. Please request a new OTP.');
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.verification.emailOtp);
+    
+    if (!isOtpValid) {
+      user.verification.emailOtpAttempts = (user.verification.emailOtpAttempts || 0) + 1;
+      await user.save();
+      
+      const remainingAttempts = 5 - (user.verification.emailOtpAttempts || 0);
+      throw new BadRequestException(`Invalid OTP. ${remainingAttempts} attempts remaining.`);
+    }
+
+    // Verify email
+    user.verification.emailVerified = true;
+    user.verification.emailOtp = undefined;
+    user.verification.emailOtpExpires = undefined;
+    user.verification.emailOtpAttempts = 0;
+    user.verification.emailVerificationToken = undefined;
+    user.verification.emailVerificationExpires = undefined;
+    
+    await user.save();
+
+    return { 
+      success: true, 
+      message: 'Email verified successfully' 
+    };
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string; expiresIn: number }> {
+    const { email } = forgotPasswordDto;
+    
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      // Don't reveal if email exists for security
+      return {
+        message: 'If the email exists, a password reset OTP has been sent.',
+        expiresIn: 600
+      };
+    }
+
+    const now = new Date();
+    
+    // Check rate limiting
+    if (user.verification.passwordResetOtpExpires && user.verification.passwordResetOtpExpires > now) {
+      const timeLeft = Math.ceil((user.verification.passwordResetOtpExpires.getTime() - now.getTime()) / (60 * 1000));
+      throw new BadRequestException(`Please wait ${timeLeft} minutes before requesting a new password reset OTP`);
+    }
+
+    const otp = this.generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.verification.passwordResetOtp = await bcrypt.hash(otp, 10);
+    user.verification.passwordResetOtpExpires = expiresAt;
+    user.verification.passwordResetOtpAttempts = 0;
+    
+    await user.save();
+    await this.emailService.sendPasswordResetOtp(email, otp, user.profile.firstName);
+
+    return {
+      message: 'Password reset OTP sent to your email',
+      expiresIn: 600 // 10 minutes in seconds
+    };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ success: boolean; message: string }> {
+    const { email, otp, newPassword } = resetPasswordDto;
+    
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Invalid reset request');
+    }
+
+    if (!user.verification.passwordResetOtp || !user.verification.passwordResetOtpExpires) {
+      throw new BadRequestException('No password reset OTP found. Please request a new one.');
+    }
+
+    if (user.verification.passwordResetOtpExpires < new Date()) {
+      throw new BadRequestException('Password reset OTP has expired. Please request a new one.');
+    }
+
+    // Check attempt limit
+    if ((user.verification.passwordResetOtpAttempts || 0) >= 5) {
+      throw new BadRequestException('Too many invalid attempts. Please request a new password reset OTP.');
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.verification.passwordResetOtp);
+    
+    if (!isOtpValid) {
+      user.verification.passwordResetOtpAttempts = (user.verification.passwordResetOtpAttempts || 0) + 1;
+      await user.save();
+      
+      const remainingAttempts = 5 - (user.verification.passwordResetOtpAttempts || 0);
+      throw new BadRequestException(`Invalid OTP. ${remainingAttempts} attempts remaining.`);
+    }
+
+    // Reset password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    user.lastPasswordReset = new Date();
+    
+    // Clear password reset OTP
+    user.verification.passwordResetOtp = undefined;
+    user.verification.passwordResetOtpExpires = undefined;
+    user.verification.passwordResetOtpAttempts = 0;
+    
+    // Invalidate all refresh tokens for security
+    user.refreshTokens = [];
+    
+    await user.save();
+
+    return { 
+      success: true, 
+      message: 'Password reset successfully' 
+    };
   }
 }

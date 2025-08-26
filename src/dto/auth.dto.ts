@@ -89,6 +89,37 @@ export class VerifyEmailDto {
   email: string;
 }
 
+export class SendEmailOtpDto {
+  @ApiProperty({ example: 'john.doe@example.com' })
+  @IsEmail()
+  @Transform(({ value }) => value.toLowerCase())
+  email: string;
+
+  @ApiProperty({ 
+    enum: ['verification', 'password_reset'], 
+    example: 'verification',
+    description: 'Type of OTP to send' 
+  })
+  @IsEnum(['verification', 'password_reset'])
+  type: 'verification' | 'password_reset';
+}
+
+export class VerifyEmailOtpDto {
+  @ApiProperty({ example: 'john.doe@example.com' })
+  @IsEmail()
+  @Transform(({ value }) => value.toLowerCase())
+  email: string;
+
+  @ApiProperty({ 
+    example: '123456',
+    description: '6-digit OTP code' 
+  })
+  @IsString()
+  @Length(6, 6)
+  @Matches(/^\d{6}$/, { message: 'OTP must be a 6-digit number' })
+  otp: string;
+}
+
 export class LoginChallengeDto {
   @ApiProperty()
   @IsString()
@@ -229,9 +260,19 @@ export class ForgotPasswordDto {
 }
 
 export class ResetPasswordDto {
-  @ApiProperty()
+  @ApiProperty({ example: 'john.doe@example.com' })
+  @IsEmail()
+  @Transform(({ value }) => value.toLowerCase())
+  email: string;
+
+  @ApiProperty({ 
+    example: '123456',
+    description: '6-digit OTP code' 
+  })
   @IsString()
-  token: string;
+  @Length(6, 6)
+  @Matches(/^\d{6}$/, { message: 'OTP must be a 6-digit number' })
+  otp: string;
 
   @ApiProperty()
   @IsString()

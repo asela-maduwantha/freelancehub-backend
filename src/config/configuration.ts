@@ -54,9 +54,16 @@ export default () => ({
   },
   
   email: {
-    service: process.env.EMAIL_SERVICE || 'sendgrid',
+    service: process.env.EMAIL_SERVICE || 'smtp',
+    // SMTP Configuration
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT || '587', 10),
+    secure: process.env.EMAIL_SECURE === 'true',
+    user: process.env.EMAIL_USER,
+    password: process.env.EMAIL_PASSWORD,
+    from: process.env.EMAIL_FROM || 'noreply@freelancehub.com',
+    // SendGrid Configuration (legacy)
     apiKey: process.env.EMAIL_API_KEY,
-    from: process.env.EMAIL_FROM || 'noreply@freelancehub.lk',
   },
   
   frontend: {

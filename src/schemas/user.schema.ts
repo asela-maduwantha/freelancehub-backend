@@ -86,6 +86,15 @@ export class Verification {
   @Prop()
   emailVerificationExpires?: Date;
 
+  @Prop()
+  emailOtp?: string;
+
+  @Prop()
+  emailOtpExpires?: Date;
+
+  @Prop({ default: 0 })
+  emailOtpAttempts?: number;
+
   @Prop({ default: false })
   phoneVerified: boolean;
 
@@ -95,6 +104,15 @@ export class Verification {
   @Prop()
   phoneVerificationExpires?: Date;
 
+  @Prop()
+  phoneOtp?: string;
+
+  @Prop()
+  phoneOtpExpires?: Date;
+
+  @Prop({ default: 0 })
+  phoneOtpAttempts?: number;
+
   @Prop({ default: false })
   identityVerified: boolean;
 
@@ -103,6 +121,15 @@ export class Verification {
 
   @Prop()
   identityVerifiedAt?: Date;
+
+  @Prop()
+  passwordResetOtp?: string;
+
+  @Prop()
+  passwordResetOtpExpires?: Date;
+
+  @Prop({ default: 0 })
+  passwordResetOtpAttempts?: number;
 }
 
 @Schema({ _id: false })
@@ -160,6 +187,9 @@ export class User {
 
   @Prop({ required: true, unique: true, minlength: 3, maxlength: 50 })
   username: string;
+
+  @Prop({ select: false }) // Hide password in queries by default
+  password?: string;
 
   @Prop({ type: [String], enum: ['freelancer', 'client'], required: true })
   roles: string[];

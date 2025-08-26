@@ -18,6 +18,10 @@ import {
   VerifyAuthenticationDto,
   RegisterPasskeyDto,
   VerifyEmailDto,
+  SendEmailOtpDto,
+  VerifyEmailOtpDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
   Enable2FADto,
   LoginResponse,
   RefreshTokenDto,
@@ -65,6 +69,82 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid or expired verification token' })
   async verifyEmail(@Body() verifyDto: VerifyEmailDto) {
     return this.authService.verifyEmail(verifyDto);
+  }
+
+  @Post('send-email-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send OTP to email for verification or password reset' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'OTP sent successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        expiresIn: { type: 'number', description: 'Expiry time in seconds' }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - email not found or rate limited' })
+  async sendEmailOtp(@Body() sendOtpDto: SendEmailOtpDto) {
+    return this.authService.sendEmailOtp(sendOtpDto);
+  }
+
+  @Post('verify-email-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email using OTP' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Email verified successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid OTP or OTP expired' })
+  async verifyEmailOtp(@Body() verifyOtpDto: VerifyEmailOtpDto) {
+    return this.authService.verifyEmailOtp(verifyOtpDto);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send password reset OTP to email' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password reset OTP sent',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        expiresIn: { type: 'number', description: 'Expiry time in seconds' }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Rate limited or invalid request' })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password using OTP' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password reset successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid OTP or OTP expired' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 
   @Post('login/challenge')
