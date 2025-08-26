@@ -185,6 +185,30 @@ export class User {
   @Prop({ enum: ['active', 'suspended', 'deactivated'], default: 'active' })
   status: string;
 
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: false })
+  isSuspended: boolean;
+
+  @Prop()
+  suspendedAt?: Date;
+
+  @Prop()
+  suspensionReason?: string;
+
+  @Prop()
+  deletedAt?: Date;
+
+  @Prop()
+  deletionReason?: string;
+
+  @Prop({ enum: ['client', 'freelancer', 'admin'], default: 'client' })
+  role: string;
+
+  @Prop()
+  lastLogin?: Date;
+
   @Prop()
   lastPasswordReset?: Date;
 

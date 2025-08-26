@@ -15,6 +15,8 @@ import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { WebsocketModule } from './websocket/websocket.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { AdminModule } from './admin/admin.module';
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -26,6 +28,7 @@ import { Payment, PaymentSchema } from './schemas/payment.schema';
 import { Message, MessageSchema, Conversation, ConversationSchema } from './schemas/message.schema';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { Review, ReviewSchema } from './schemas/review.schema';
+import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
 
 @Module({
   imports: [
@@ -73,6 +76,7 @@ import { Review, ReviewSchema } from './schemas/review.schema';
       { name: Conversation.name, schema: ConversationSchema },
       { name: Notification.name, schema: NotificationSchema },
       { name: Review.name, schema: ReviewSchema },
+      { name: FileUpload.name, schema: FileUploadSchema },
     ]),
 
     // Feature modules
@@ -83,6 +87,8 @@ import { Review, ReviewSchema } from './schemas/review.schema';
     NotificationsModule,
     ReviewsModule,
     WebsocketModule,
+    UploadsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
