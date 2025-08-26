@@ -382,7 +382,7 @@ export class NotificationsService {
 
   private async deliverNotification(notification: any) {
     // In a real implementation, this would integrate with:
-    // - Email service (SendGrid, SES, etc.)
+    // - Email service (SMTP, SES, etc.)
     // - Push notification service (FCM, APNS, etc.)
     // - SMS service (Twilio, etc.)
     // - WebSocket for real-time in-app notifications

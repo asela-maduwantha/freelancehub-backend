@@ -76,6 +76,17 @@ export class RegisterUserDto {
   @IsOptional()
   @IsDateString()
   dateOfBirth?: string;
+
+  @ApiProperty({ 
+    example: 'StrongPassword123!',
+    description: 'Password must contain at least 8 characters with uppercase, lowercase, number and special character'
+  })
+  @IsString()
+  @Length(8, 128)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+    message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+  })
+  password: string;
 }
 
 export class VerifyEmailDto {
@@ -124,6 +135,18 @@ export class LoginChallengeDto {
   @ApiProperty()
   @IsString()
   identifier: string; // email or username
+}
+
+export class LoginDto {
+  @ApiProperty({ example: 'john.doe@example.com' })
+  @IsEmail()
+  @Transform(({ value }) => value.toLowerCase())
+  email: string;
+
+  @ApiProperty({ example: 'StrongPassword123!' })
+  @IsString()
+  @Length(1, 128)
+  password: string;
 }
 
 export class RegisterPasskeyDto {

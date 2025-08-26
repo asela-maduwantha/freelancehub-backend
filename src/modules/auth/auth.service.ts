@@ -24,6 +24,7 @@ import { User, UserDocument } from '../../schemas/user.schema';
 import { EmailService } from '../../services/email.service';
 import { 
   RegisterUserDto, 
+  LoginDto,
   LoginChallengeDto, 
   VerifyAuthenticationDto, 
   RegisterPasskeyDto,
@@ -63,6 +64,9 @@ export class AuthService {
       throw new BadRequestException('Username already taken');
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(registerDto.password, 12);
+
     // Create verification token
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
@@ -71,6 +75,7 @@ export class AuthService {
     const user = new this.userModel({
       email: registerDto.email,
       username: registerDto.username,
+      password: hashedPassword,
       roles: [registerDto.primaryRole],
       profile: {
         firstName: registerDto.firstName,
@@ -98,6 +103,83 @@ export class AuthService {
     return {
       message: 'User registered successfully. Please check your email for verification.',
       verificationRequired: true
+    };
+  }
+
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
+    // Find user by email
+    const user = await this.userModel.findOne({ 
+      email: loginDto.email 
+    }).select('+password'); // Include password in query
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Check if email is verified
+    if (!user.verification.emailVerified) {
+      throw new UnauthorizedException('Please verify your email address before logging in');
+    }
+
+    // Check if account is active
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('Account is not active');
+    }
+
+    // Check password
+    if (!user.password) {
+      throw new UnauthorizedException('Password login not available for this account. Please use passkey authentication.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Update login activity
+    user.activity.lastLoginAt = new Date();
+    user.activity.loginCount = (user.activity.loginCount || 0) + 1;
+    user.activity.lastActiveAt = new Date();
+    await user.save();
+
+    // Generate tokens
+    const payload = { 
+      sub: (user._id as any).toString(), 
+      email: user.email, 
+      username: user.username,
+      roles: user.roles 
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = crypto.randomBytes(64).toString('hex');
+
+    // Store refresh token
+    user.refreshTokens = user.refreshTokens || [];
+    user.refreshTokens.push(refreshToken);
+
+    // Keep only last 5 refresh tokens
+    if (user.refreshTokens.length > 5) {
+      user.refreshTokens = user.refreshTokens.slice(-5);
+    }
+
+    await user.save();
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: (user._id as any).toString(),
+        email: user.email,
+        username: user.username,
+        roles: user.roles,
+        profile: user.profile,
+        verification: {
+          emailVerified: user.verification.emailVerified,
+          phoneVerified: user.verification.phoneVerified,
+          identityVerified: user.verification.identityVerified,
+        },
+      },
+      expiresIn: 900 // 15 minutes
     };
   }
 

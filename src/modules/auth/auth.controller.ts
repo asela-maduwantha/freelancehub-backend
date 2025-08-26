@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import {
   RegisterUserDto,
+  LoginDto,
   LoginChallengeDto,
   VerifyAuthenticationDto,
   RegisterPasskeyDto,
@@ -51,6 +52,20 @@ export class AuthController {
   @ApiResponse({ status: 409, description: 'Email or username already exists' })
   async register(@Body() registerDto: RegisterUserDto) {
     return this.authService.register(registerDto);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful',
+    type: LoginResponse
+  })
+  @ApiResponse({ status: 401, description: 'Invalid credentials or email not verified' })
+  @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
+  async login(@Body() loginDto: LoginDto): Promise<LoginResponse> {
+    return this.authService.login(loginDto);
   }
 
   @Post('verify-email')

@@ -67,8 +67,6 @@ export default () => ({
     user: process.env.EMAIL_USER,
     password: process.env.EMAIL_PASSWORD,
     from: process.env.EMAIL_FROM || 'noreply@freelancehub.com',
-    // SendGrid Configuration (legacy)
-    apiKey: process.env.EMAIL_API_KEY,
   },
   
   frontend: {
