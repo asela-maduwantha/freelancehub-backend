@@ -14,6 +14,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { WebsocketModule } from './websocket/websocket.module';
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -81,6 +82,7 @@ import { Review, ReviewSchema } from './schemas/review.schema';
     MessagingModule,
     NotificationsModule,
     ReviewsModule,
+    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
