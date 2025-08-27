@@ -19,7 +19,7 @@ export class ClientService {
 
   async getDashboardData(clientId: string) {
     const client = await this.userModel.findById(clientId);
-    if (!client || !client.roles.includes('client')) {
+    if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can access this data');
     }
 
@@ -377,11 +377,11 @@ export class ClientService {
       this.userModel.findById(freelancerId)
     ]);
 
-    if (!client || !client.roles.includes('client')) {
+    if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can add favorites');
     }
 
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new NotFoundException('Freelancer not found');
     }
 
@@ -413,7 +413,7 @@ export class ClientService {
     const skip = (page - 1) * limit;
 
     const client = await this.userModel.findById(clientId) as any;
-    if (!client || !client.roles.includes('client')) {
+    if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can access favorites');
     }
 
@@ -423,7 +423,7 @@ export class ClientService {
       this.userModel
         .find({
           _id: { $in: favoriteIds },
-          roles: 'freelancer'
+          role: 'freelancer'
         })
         .select('username profile freelancerProfile.title freelancerProfile.skills freelancerProfile.hourlyRate freelancerProfile.rating')
         .skip(skip)
@@ -454,7 +454,7 @@ export class ClientService {
     const skip = (page - 1) * limit;
 
     const query: any = {
-      roles: 'freelancer',
+      role: 'freelancer',
       isVerified: true
     };
 
@@ -565,7 +565,7 @@ export class ClientService {
 
   async getSavedSearches(clientId: string) {
     const client = await this.userModel.findById(clientId) as any;
-    if (!client || !client.roles.includes('client')) {
+    if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can access saved searches');
     }
 
@@ -574,7 +574,7 @@ export class ClientService {
 
   async saveSearch(clientId: string, searchDto: any) {
     const client = await this.userModel.findById(clientId) as any;
-    if (!client || !client.roles.includes('client')) {
+    if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can save searches');
     }
 

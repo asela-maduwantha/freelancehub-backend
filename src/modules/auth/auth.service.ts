@@ -36,6 +36,7 @@ import {
   ResetPasswordDto,
   LoginResponse 
 } from '../../dto/auth.dto';
+import { LoggingInterceptor } from 'src/common';
 
 @Injectable()
 export class AuthService {
@@ -140,26 +141,22 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<LoginResponse> {
-    // Find user by email
     const user = await this.userModel.findOne({ 
       email: loginDto.email 
-    }).select('+password'); // Include password in query
+    }).select('+password'); 
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Check if email is verified
     if (!user.verification.emailVerified) {
       throw new UnauthorizedException('Please verify your email address before logging in');
     }
 
-    // Check if account is active
     if (user.status !== 'active') {
       throw new UnauthorizedException('Account is not active');
     }
 
-    // Check password
     if (!user.password) {
       throw new UnauthorizedException('Password login not available for this account. Please use passkey authentication.');
     }
@@ -169,33 +166,29 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Update login activity
     user.activity.lastLoginAt = new Date();
     user.activity.loginCount = (user.activity.loginCount || 0) + 1;
     user.activity.lastActiveAt = new Date();
     await user.save();
 
-    // Generate tokens
     const payload = { 
       sub: (user._id as any).toString(), 
       email: user.email, 
       username: user.username,
-      roles: user.roles 
+      role: user.role 
     };
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = crypto.randomBytes(64).toString('hex');
 
-    // Store refresh token
     user.refreshTokens = user.refreshTokens || [];
     user.refreshTokens.push(refreshToken);
 
-    // Keep only last 5 refresh tokens
     if (user.refreshTokens.length > 5) {
       user.refreshTokens = user.refreshTokens.slice(-5);
     }
 
-    await user.save();
+await user.save();
 
     return {
       accessToken,
@@ -204,14 +197,14 @@ export class AuthService {
         id: (user._id as any).toString(),
         email: user.email,
         username: user.username,
-        roles: user.roles,
+        role: user.role,
         profile: user.profile,
         verification: {
           emailVerified: user.verification.emailVerified,
           phoneVerified: user.verification.phoneVerified
         },
       },
-      expiresIn: 900 // 15 minutes
+      expiresIn: 900 
     };
   }
 
@@ -340,7 +333,7 @@ export class AuthService {
       sub: (user._id as string).toString(),
       email: user.email,
       username: user.username,
-      roles: user.roles,
+      role: user.role,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -360,7 +353,7 @@ export class AuthService {
         id: (user._id as string).toString(),
         email: user.email,
         username: user.username,
-        roles: user.roles,
+        role: user.role,
         profile: user.profile,
         verification: user.verification,
       },
@@ -514,7 +507,7 @@ export class AuthService {
         sub: (user._id as string).toString(),
         email: user.email,
         username: user.username,
-        roles: user.roles,
+        role: user.role,
       };
 
       const accessToken = this.jwtService.sign(newPayload);

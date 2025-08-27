@@ -308,7 +308,7 @@ export class LoginResponse {
     id: string;
     email: string;
     username: string;
-    roles: string[];
+    role: string;
     profile: any;
     verification: any;
   };

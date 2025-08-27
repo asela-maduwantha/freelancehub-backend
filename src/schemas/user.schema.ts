@@ -203,9 +203,6 @@ export class User {
   @Prop({ select: false }) // Hide password in queries by default
   password?: string;
 
-  @Prop({ type: [String], enum: ['freelancer', 'client'], required: true })
-  roles: string[];
-
   @Prop({ type: Profile, required: true })
   profile: Profile;
 
@@ -277,11 +274,7 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-// Indexes
-UserSchema.index({ email: 1 }, { unique: true });
-UserSchema.index({ username: 1 }, { unique: true });
 UserSchema.index({ status: 1, createdAt: -1 });
-UserSchema.index({ roles: 1, status: 1 });
 
 // Virtual for full name
 UserSchema.virtual('profile.fullName').get(function() {

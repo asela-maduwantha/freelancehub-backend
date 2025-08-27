@@ -18,6 +18,94 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ProposalPricingDto {
+  @ApiProperty({ example: 1500 })
+  @IsNumber()
+  @Min(1)
+  amount: number;
+
+  @ApiProperty({ enum: ['USD', 'LKR'], example: 'USD' })
+  @IsString()
+  currency: string;
+
+  @ApiProperty({ enum: ['fixed', 'hourly'], example: 'fixed' })
+  @IsString()
+  type: string;
+
+  @ApiPropertyOptional({ example: 40 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(168)
+  estimatedHours?: number;
+
+  @ApiPropertyOptional({ example: 'Detailed breakdown' })
+  @IsOptional()
+  @IsString()
+  breakdown?: string;
+}
+
+export class ProposalTimelineDto {
+  @ApiProperty({ example: 30 })
+  @IsNumber()
+  @Min(1)
+  @Max(365)
+  deliveryTime: number;
+
+  @ApiPropertyOptional({ example: '2025-09-01T00:00:00.000Z' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional({ type: 'array', items: { type: 'object' } })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProposalMilestoneDto)
+  milestones?: ProposalMilestoneDto[];
+}
+
+export class ProposalMilestoneDto {
+  @ApiProperty({ example: 'Design Phase' })
+  @IsString()
+  title: string;
+
+  @ApiProperty({ example: 'Complete UI/UX design' })
+  @IsString()
+  description: string;
+
+  @ApiProperty({ example: '2025-09-10T00:00:00.000Z' })
+  @IsDateString()
+  deliveryDate: string;
+
+  @ApiProperty({ example: 500 })
+  @IsNumber()
+  amount: number;
+}
+
+export class ProposalAttachmentDto {
+  @ApiProperty({ example: 'Receipt.pdf' })
+  @IsString()
+  filename: string;
+
+  @ApiProperty({ example: 'https://freelancehub.blob.core.windows.net/freelancehubfiles/Receipt.pdf' })
+  @IsString()
+  url: string;
+
+  @ApiProperty({ example: 'application/pdf' })
+  @IsString()
+  fileType: string;
+
+  @ApiProperty({ example: 90315 })
+  @IsNumber()
+  fileSize: number;
+
+  @ApiPropertyOptional({ example: 'Receipt for payment' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
+
 export class ProjectBudgetDto {
   @ApiProperty({ example: 1000 })
   @IsNumber()
@@ -461,6 +549,7 @@ export class ProjectFilterDto {
   search?: string;
 }
 
+
 export class SubmitProposalDto {
   @ApiProperty({ example: 'I am excited to work on your project...' })
   @IsString()
@@ -468,10 +557,15 @@ export class SubmitProposalDto {
   @Transform(({ value }) => value.trim())
   coverLetter: string;
 
-  @ApiProperty({ example: 1500 })
-  @IsNumber()
-  @Min(1)
-  proposedBudget: number;
+  @ApiProperty({ type: ProposalPricingDto })
+  @ValidateNested()
+  @Type(() => ProposalPricingDto)
+  pricing: ProposalPricingDto;
+
+  @ApiProperty({ type: ProposalTimelineDto })
+  @ValidateNested()
+  @Type(() => ProposalTimelineDto)
+  timeline: ProposalTimelineDto;
 
   @ApiPropertyOptional({ example: 14 })
   @IsOptional()
@@ -487,12 +581,13 @@ export class SubmitProposalDto {
   @ArrayMaxSize(5)
   portfolioLinks?: string[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [ProposalAttachmentDto] })
   @IsOptional()
   @IsArray()
-  @IsUrl({}, { each: true })
+  @ValidateNested({ each: true })
+  @Type(() => ProposalAttachmentDto)
   @ArrayMaxSize(3)
-  attachments?: string[];
+  attachments?: ProposalAttachmentDto[];
 
   @ApiPropertyOptional()
   @IsOptional()

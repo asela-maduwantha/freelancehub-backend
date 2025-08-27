@@ -34,31 +34,33 @@ export class UploadsService {
     userId: string,
   ): Promise<FileUploadDocument> {
     try {
-      // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         throw new BadRequestException('File size exceeds 10MB limit');
       }
 
-      // Validate file type based on category
       this.validateFileType(file, uploadDto.category);
 
-      // Upload to Azure Blob Storage
-      const blockBlobClient = this.containerClient.getBlockBlobClient(file.filename);
+      const blobName = file.filename || file.originalname;
+      if (!blobName) {
+        throw new BadRequestException('File name is missing');
+      }
+      const blockBlobClient = this.containerClient.getBlockBlobClient(blobName);
+
       await blockBlobClient.uploadData(file.buffer, {
         blobHTTPHeaders: { blobContentType: file.mimetype }
       });
 
       const fileUpload = new this.fileUploadModel({
-        filename: file.filename,
+        filename: blobName,
         originalName: file.originalname,
         mimetype: file.mimetype,
         size: file.size,
-        path: file.filename,
+        path: blobName,
         uploadedBy: new Types.ObjectId(userId),
         category: uploadDto.category,
         relatedTo: uploadDto.relatedTo ? new Types.ObjectId(uploadDto.relatedTo) : undefined,
         onModel: uploadDto.onModel,
-        url: `${this.blobUrl}/${file.filename}`,
+        url: `${this.blobUrl}/${blobName}`,
       });
 
       const savedFile = await fileUpload.save();

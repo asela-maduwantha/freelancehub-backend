@@ -21,7 +21,7 @@ export class FreelancerService {
 
   async getDashboardData(freelancerId: string) {
     const freelancer = await this.userModel.findById(freelancerId);
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can access this data');
     }
 
@@ -372,7 +372,7 @@ export class FreelancerService {
   async requestPayout(freelancerId: string, payoutDto: { amount: number; paymentMethod: string }) {
     // Validate freelancer
     const freelancer = await this.userModel.findById(freelancerId);
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can request payouts');
     }
 
@@ -418,7 +418,7 @@ export class FreelancerService {
 
   async updateProfile(freelancerId: string, profileDto: any) {
     const freelancer = await this.userModel.findById(freelancerId);
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can update this profile');
     }
 
@@ -439,7 +439,7 @@ export class FreelancerService {
 
   async addPortfolioItem(freelancerId: string, portfolioDto: any) {
     const freelancer = await this.userModel.findById(freelancerId) as any;
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can add portfolio items');
     }
 
@@ -489,7 +489,7 @@ export class FreelancerService {
     const skip = (page - 1) * limit;
 
     const freelancer = await this.userModel.findById(freelancerId) as any;
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can access bookmarks');
     }
 

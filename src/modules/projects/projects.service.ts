@@ -17,7 +17,7 @@ export class ProjectsService {
 
   async createProject(createProjectDto: CreateProjectDto, clientId: string): Promise<Project> {
     const client = await this.userModel.findById(clientId);
-    if (!client || !client.roles.includes('client')) {
+    if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can create projects');
     }
 
@@ -230,7 +230,7 @@ export class ProjectsService {
     }
 
     const freelancer = await this.userModel.findById(freelancerId);
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can submit proposals');
     }
 
@@ -554,7 +554,7 @@ export class ProjectsService {
     return {
       projects: projects.map(project => ({
         ...project,
-        proposalCount: Math.floor(Math.random() * 20), // You might want to calculate this properly
+        proposalCount: Math.floor(Math.random() * 20), 
         timePosted: this.calculateTimeAgo(project.createdAt)
       })),
       total,
@@ -571,7 +571,7 @@ export class ProjectsService {
     }
 
     const freelancer = await this.userModel.findById(freelancerId);
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can bookmark projects');
     }
 
@@ -597,7 +597,7 @@ export class ProjectsService {
 
   async removeBookmark(projectId: string, freelancerId: string) {
     const freelancer = await this.userModel.findById(freelancerId);
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can manage bookmarks');
     }
 
@@ -614,7 +614,7 @@ export class ProjectsService {
   // Recommended projects for freelancers
   async getRecommendedProjects(freelancerId: string, limit: number = 20) {
     const freelancer = await this.userModel.findById(freelancerId);
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can get recommendations');
     }
 
@@ -733,7 +733,7 @@ export class ProjectsService {
       throw new ForbiddenException('You can only invite freelancers to your own projects');
     }
 
-    if (!freelancer || !freelancer.roles.includes('freelancer')) {
+    if (!freelancer || !freelancer.role.includes('freelancer')) {
       throw new NotFoundException('Freelancer not found');
     }
 

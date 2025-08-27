@@ -23,6 +23,7 @@ import {
   ProjectFilterDto,
   SubmitProposalDto,
 } from '../../dto/project.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Projects')
 @Controller({ path: 'projects', version: '1' })
@@ -44,6 +45,8 @@ export class ProjectsController {
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all projects with filtering and pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
@@ -60,7 +63,7 @@ export class ProjectsController {
     @Query(ValidationPipe) filterDto: ProjectFilterDto,
     @Request() req: any,
   ) {
-    const userId = req.user?.id;
+    const userId = req.user.id;
     return this.projectsService.getProjects(filterDto, userId);
   }
 
@@ -75,12 +78,44 @@ export class ProjectsController {
     return this.projectsService.getMyProjects(req.user.id, status);
   }
 
+    // Public endpoints (no authentication required)
+  @Get('public')
+  @ApiOperation({ summary: 'Browse projects publicly (no authentication required)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'minBudget', required: false, type: Number })
+  @ApiQuery({ name: 'maxBudget', required: false, type: Number })
+  @ApiQuery({ name: 'projectType', required: false, enum: ['fixed', 'hourly'] })
+  @ApiQuery({ name: 'skills', required: false, type: String, description: 'Comma-separated skills' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Public projects retrieved successfully' })
+  async getPublicProjects(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 12,
+    @Query('category') category?: string,
+    @Query('minBudget') minBudget?: number,
+    @Query('maxBudget') maxBudget?: number,
+    @Query('projectType') projectType?: 'fixed' | 'hourly',
+    @Query('skills') skills?: string,
+  ) {
+    return this.projectsService.getPublicProjects({
+      page,
+      limit,
+      category,
+      minBudget,
+      maxBudget,
+      projectType,
+      skills: skills?.split(',').map(s => s.trim()),
+    });
+  }
+
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Get project by ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Project retrieved successfully' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Project not found' })
   async getProjectById(@Param('id') id: string, @Request() req: any) {
-    const userId = req.user?.id;
+    const userId = req.user.id;
     return this.projectsService.getProjectById(id, userId);
   }
 
@@ -197,37 +232,6 @@ export class ProjectsController {
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'You can only view analytics for your own projects' })
   async getProjectAnalytics(@Param('id') projectId: string, @Request() req: any) {
     return this.projectsService.getProjectAnalytics(projectId, req.user.id);
-  }
-
-  // Public endpoints (no authentication required)
-  @Get('public')
-  @ApiOperation({ summary: 'Browse projects publicly (no authentication required)' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'category', required: false, type: String })
-  @ApiQuery({ name: 'minBudget', required: false, type: Number })
-  @ApiQuery({ name: 'maxBudget', required: false, type: Number })
-  @ApiQuery({ name: 'projectType', required: false, enum: ['fixed', 'hourly'] })
-  @ApiQuery({ name: 'skills', required: false, type: String, description: 'Comma-separated skills' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Public projects retrieved successfully' })
-  async getPublicProjects(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 12,
-    @Query('category') category?: string,
-    @Query('minBudget') minBudget?: number,
-    @Query('maxBudget') maxBudget?: number,
-    @Query('projectType') projectType?: 'fixed' | 'hourly',
-    @Query('skills') skills?: string,
-  ) {
-    return this.projectsService.getPublicProjects({
-      page,
-      limit,
-      category,
-      minBudget,
-      maxBudget,
-      projectType,
-      skills: skills?.split(',').map(s => s.trim()),
-    });
   }
 
   @Get(':id/bookmark')

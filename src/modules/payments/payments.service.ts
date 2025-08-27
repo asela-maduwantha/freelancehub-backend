@@ -399,7 +399,7 @@ export class PaymentsService {
       throw new NotFoundException('User not found');
     }
 
-    if (!user.roles.includes('freelancer')) {
+    if (!user.role.includes('freelancer')) {
       throw new ForbiddenException('Only freelancers can create connected accounts');
     }
 

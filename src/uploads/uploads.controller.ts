@@ -18,7 +18,6 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
-// Removed diskStorage import for Azure Blob Storage migration
 import { extname, join } from 'path';
 import * as fs from 'fs';
 import { UploadsService } from './uploads.service';
