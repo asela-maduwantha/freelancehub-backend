@@ -14,28 +14,10 @@ import * as fs from 'fs';
       { name: FileUpload.name, schema: FileUploadSchema },
     ]),
     MulterModule.register({
-      storage: diskStorage({
-  // For Azure Blob Storage, file handling is done in service, not here
-  // storage: diskStorage({
-  //   destination: (req, file, cb) => {
-  //     const uploadDir = './uploads';
-  //     // Create uploads directory if it doesn't exist
-  //     if (!fs.existsSync(uploadDir)) {
-  //       fs.mkdirSync(uploadDir, { recursive: true });
-  //     }
-  //     cb(null, uploadDir);
-  //   },
-  //   filename: (req, file, cb) => {
-  //     const randomName = Array(32)
-  //       .fill(null)
-  //       .map(() => Math.round(Math.random() * 16).toString(16))
-  //       .join('');
-  //     cb(null, `${randomName}${extname(file.originalname)}`);
-  //   },
-      }),
+      storage: undefined, 
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-        files: 10, // Max 10 files per request
+        fileSize: 10 * 1024 * 1024, 
+        files: 10, 
       },
     }),
   ],
