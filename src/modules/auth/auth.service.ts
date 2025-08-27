@@ -209,8 +209,7 @@ export class AuthService {
         profile: user.profile,
         verification: {
           emailVerified: user.verification.emailVerified,
-          phoneVerified: user.verification.phoneVerified,
-          identityVerified: user.verification.identityVerified,
+          phoneVerified: user.verification.phoneVerified
         },
       },
       expiresIn: 900 // 15 minutes

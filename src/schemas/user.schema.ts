@@ -25,22 +25,7 @@ export class Profile {
   })
   phone?: string;
 
-  @Prop()
-  dateOfBirth?: Date;
 
-  @Prop({
-    type: {
-      country: { type: String, required: true },
-      city: { type: String, required: true },
-      coordinates: { type: [Number], index: '2dsphere' }
-    },
-    required: true
-  })
-  location: {
-    country: string;
-    city: string;
-    coordinates?: [number, number];
-  };
 }
 
 @Schema({ _id: false })
@@ -119,15 +104,6 @@ export class Verification {
 
   @Prop({ default: 0 })
   phoneOtpAttempts?: number;
-
-  @Prop({ default: false })
-  identityVerified: boolean;
-
-  @Prop({ type: [String] })
-  identityDocuments?: string[];
-
-  @Prop()
-  identityVerifiedAt?: Date;
 
   @Prop()
   passwordResetOtp?: string;
@@ -304,7 +280,6 @@ export const UserSchema = SchemaFactory.createForClass(User);
 // Indexes
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ username: 1 }, { unique: true });
-UserSchema.index({ 'profile.location.coordinates': '2dsphere' });
 UserSchema.index({ status: 1, createdAt: -1 });
 UserSchema.index({ roles: 1, status: 1 });
 
