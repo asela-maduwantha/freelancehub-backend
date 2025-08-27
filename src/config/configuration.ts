@@ -51,11 +51,11 @@ export default () => ({
     apiVersion: '2023-10-16' as const,
   },
   
-  aws: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION || 'us-east-1',
-    s3Bucket: process.env.AWS_S3_BUCKET,
+  azure: {
+    accountName: process.env.AZURE_STORAGE_ACCOUNT_NAME,
+    accountKey: process.env.AZURE_STORAGE_ACCOUNT_KEY,
+    containerName: process.env.AZURE_STORAGE_CONTAINER_NAME,
+    blobUrl: process.env.AZURE_BLOB_URL,
   },
   
   email: {

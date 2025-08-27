@@ -18,7 +18,7 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
-import { diskStorage } from 'multer';
+// Removed diskStorage import for Azure Blob Storage migration
 import { extname, join } from 'path';
 import * as fs from 'fs';
 import { UploadsService } from './uploads.service';
@@ -37,21 +37,7 @@ export class UploadsController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'File uploaded successfully' })
   @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-      },
-    }),
+  FileInterceptor('file'),
   )
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
@@ -88,21 +74,7 @@ export class UploadsController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Files uploaded successfully' })
   @UseInterceptors(
-    FilesInterceptor('files', 10, {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB per file
-      },
-    }),
+  FilesInterceptor('files', 10),
   )
   async uploadMultipleFiles(
     @UploadedFiles() files: Express.Multer.File[],

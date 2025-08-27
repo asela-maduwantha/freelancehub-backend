@@ -5,14 +5,28 @@ import { FileUpload, FileUploadDocument } from '../schemas/file-upload.schema';
 import { FileUploadDto, FileFilterDto } from './dto/upload.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { BlobServiceClient } from '@azure/storage-blob';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UploadsService {
   private readonly logger = new Logger(UploadsService.name);
+  private blobServiceClient: BlobServiceClient;
+  private containerClient: any;
 
   constructor(
     @InjectModel(FileUpload.name) private fileUploadModel: Model<FileUploadDocument>,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    const accountName = this.configService.get<string>('azure.accountName');
+    const accountKey = this.configService.get<string>('azure.accountKey');
+    const containerName = this.configService.get<string>('azure.containerName');
+    const blobUrl = this.configService.get<string>('azure.blobUrl');
+    const connStr = `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=${accountKey};EndpointSuffix=core.windows.net`;
+    this.blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
+    this.containerClient = this.blobServiceClient.getContainerClient(containerName);
+    this.blobUrl = blobUrl;
+  }
 
   async uploadFile(
     file: Express.Multer.File,
@@ -28,22 +42,27 @@ export class UploadsService {
       // Validate file type based on category
       this.validateFileType(file, uploadDto.category);
 
+      // Upload to Azure Blob Storage
+      const blockBlobClient = this.containerClient.getBlockBlobClient(file.filename);
+      await blockBlobClient.uploadData(file.buffer, {
+        blobHTTPHeaders: { blobContentType: file.mimetype }
+      });
+
       const fileUpload = new this.fileUploadModel({
         filename: file.filename,
         originalName: file.originalname,
         mimetype: file.mimetype,
         size: file.size,
-        path: file.path,
+        path: file.filename,
         uploadedBy: new Types.ObjectId(userId),
         category: uploadDto.category,
         relatedTo: uploadDto.relatedTo ? new Types.ObjectId(uploadDto.relatedTo) : undefined,
         onModel: uploadDto.onModel,
-        url: `/uploads/${file.filename}`,
+        url: `${this.blobUrl}/${file.filename}`,
       });
 
       const savedFile = await fileUpload.save();
-      this.logger.log(`File uploaded: ${file.originalname} by user ${userId}`);
-      
+      this.logger.log(`File uploaded to Azure: ${file.originalname} by user ${userId}`);
       return savedFile;
     } catch (error) {
       // Clean up uploaded file if database save fails
@@ -120,16 +139,15 @@ export class UploadsService {
     file.isActive = false;
     await file.save();
 
-    // Optionally delete physical file
+    // Delete from Azure Blob Storage
     try {
-      if (fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
-      }
+      const blockBlobClient = this.containerClient.getBlockBlobClient(file.filename);
+      await blockBlobClient.deleteIfExists();
     } catch (error) {
-      this.logger.warn(`Failed to delete physical file ${file.path}:`, error.message);
+      this.logger.warn(`Failed to delete blob ${file.filename}:`, error.message);
     }
 
-    this.logger.log(`File deleted: ${file.originalName} by user ${userId}`);
+    this.logger.log(`File deleted from Azure: ${file.originalName} by user ${userId}`);
   }
 
   async getFilesByProject(projectId: string): Promise<FileUploadDocument[]> {
