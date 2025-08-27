@@ -22,6 +22,23 @@ import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../modules/auth/guards/roles.guard';
 import { Roles } from '../modules/auth/decorators/roles.decorator';
 import { FreelancerService } from './freelancer.service';
+import {
+  FreelancerDashboardDto,
+  DetailedFreelancerStatsDto,
+  ActivityFeedQueryDto,
+  EarningsQueryDto,
+  EarningsResponseDto,
+  PaymentHistoryQueryDto,
+  PaymentHistoryResponseDto,
+  PayoutRequestDto,
+  PayoutResponseDto,
+  FreelancerProfileUpdateDto,
+  PortfolioItemDto,
+  PortfolioItemResponseDto,
+  ActiveProjectDto,
+  PaginationDto,
+  BookmarkedProjectsResponseDto,
+} from '../dto/freelancer';
 
 @ApiTags('Freelancer')
 @ApiBearerAuth()
@@ -36,140 +53,149 @@ export class FreelancerController {
   @ApiResponse({ 
     status: HttpStatus.OK, 
     description: 'Dashboard data retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        stats: {
-          type: 'object',
-          properties: {
-            activeProjects: { type: 'number' },
-            pendingProposals: { type: 'number' },
-            totalEarnings: { type: 'number' },
-            profileViews: { type: 'number' },
-            completedProjects: { type: 'number' },
-            successRate: { type: 'number' }
-          }
-        },
-        recentActivity: { type: 'array' },
-        upcomingDeadlines: { type: 'array' },
-        recentMessages: { type: 'array' }
-      }
-    }
+    type: FreelancerDashboardDto
   })
-  async getDashboard(@Request() req: any) {
+  async getDashboard(@Request() req: any): Promise<FreelancerDashboardDto> {
     return this.freelancerService.getDashboardData(req.user.id);
   }
 
   @Get('stats')
   @ApiOperation({ summary: 'Get freelancer statistics' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Statistics retrieved successfully' })
-  async getStats(@Request() req: any) {
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Statistics retrieved successfully',
+    type: DetailedFreelancerStatsDto
+  })
+  async getStats(@Request() req: any): Promise<DetailedFreelancerStatsDto> {
     return this.freelancerService.getFreelancerStats(req.user.id);
   }
 
   @Get('activity')
   @ApiOperation({ summary: 'Get freelancer activity feed' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiResponse({ status: HttpStatus.OK, description: 'Activity feed retrieved successfully' })
   async getActivity(
     @Request() req: any,
-    @Query('limit') limit: number = 10,
-    @Query('page') page: number = 1
+    @Query() queryDto: ActivityFeedQueryDto
   ) {
-    return this.freelancerService.getActivityFeed(req.user.id, { limit, page });
+    return this.freelancerService.getActivityFeed(req.user.id, queryDto);
   }
 
   @Get('earnings')
   @ApiOperation({ summary: 'Get freelancer earnings overview' })
-  @ApiQuery({ name: 'period', required: false, enum: ['daily', 'weekly', 'monthly', 'yearly'] })
-  @ApiQuery({ name: 'year', required: false, type: Number })
-  @ApiQuery({ name: 'month', required: false, type: Number })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Earnings data retrieved successfully' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Earnings data retrieved successfully',
+    type: EarningsResponseDto
+  })
   async getEarnings(
     @Request() req: any,
-    @Query('period') period: string = 'monthly',
-    @Query('year') year?: number,
-    @Query('month') month?: number
-  ) {
-    return this.freelancerService.getEarnings(req.user.id, { period, year, month });
+    @Query() queryDto: EarningsQueryDto
+  ): Promise<EarningsResponseDto> {
+    return this.freelancerService.getEarnings(req.user.id, queryDto);
   }
 
   @Get('payments')
   @ApiOperation({ summary: 'Get freelancer payment history' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'status', required: false, enum: ['pending', 'completed', 'failed'] })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Payment history retrieved successfully' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Payment history retrieved successfully',
+    type: PaymentHistoryResponseDto
+  })
   async getPayments(
     @Request() req: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-    @Query('status') status?: string
-  ) {
-    return this.freelancerService.getPaymentHistory(req.user.id, { page, limit, status });
+    @Query() queryDto: PaymentHistoryQueryDto
+  ): Promise<PaymentHistoryResponseDto> {
+    return this.freelancerService.getPaymentHistory(req.user.id, queryDto);
   }
 
   @Post('payout')
   @ApiOperation({ summary: 'Request payout' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Payout requested successfully' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Payout requested successfully',
+    type: PayoutResponseDto
+  })
   async requestPayout(
     @Request() req: any,
-    @Body() payoutDto: { amount: number; paymentMethod: string }
-  ) {
+    @Body() payoutDto: PayoutRequestDto
+  ): Promise<PayoutResponseDto> {
     return this.freelancerService.requestPayout(req.user.id, payoutDto);
   }
 
   @Put('profile')
   @ApiOperation({ summary: 'Update freelancer profile' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Profile updated successfully' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Profile updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  })
   async updateProfile(
     @Request() req: any,
-    @Body() profileDto: any
-  ) {
+    @Body() profileDto: FreelancerProfileUpdateDto
+  ): Promise<{ success: boolean; message: string }> {
     return this.freelancerService.updateProfile(req.user.id, profileDto);
   }
 
   @Post('portfolio')
   @ApiOperation({ summary: 'Add portfolio item' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Portfolio item added successfully' })
+  @ApiResponse({ 
+    status: HttpStatus.CREATED, 
+    description: 'Portfolio item added successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+        item: { $ref: '#/components/schemas/PortfolioItemResponseDto' }
+      }
+    }
+  })
   async addPortfolioItem(
     @Request() req: any,
-    @Body() portfolioDto: {
-      title: string;
-      description: string;
-      technologies: string[];
-      images?: string[];
-      links?: { type: string; url: string }[];
-    }
-  ) {
+    @Body() portfolioDto: PortfolioItemDto
+  ): Promise<{ success: boolean; message: string; item: PortfolioItemResponseDto }> {
     return this.freelancerService.addPortfolioItem(req.user.id, portfolioDto);
   }
 
   @Get('portfolio')
   @ApiOperation({ summary: 'Get freelancer portfolio' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Portfolio retrieved successfully' })
-  async getPortfolio(@Request() req: any) {
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Portfolio retrieved successfully',
+    type: [PortfolioItemResponseDto]
+  })
+  async getPortfolio(@Request() req: any): Promise<PortfolioItemResponseDto[]> {
     return this.freelancerService.getPortfolio(req.user.id);
   }
 
   @Get('projects/active')
   @ApiOperation({ summary: 'Get active projects for freelancer' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Active projects retrieved successfully' })
-  async getActiveProjects(@Request() req: any) {
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Active projects retrieved successfully',
+    type: [ActiveProjectDto]
+  })
+  async getActiveProjects(@Request() req: any): Promise<ActiveProjectDto[]> {
     return this.freelancerService.getActiveProjects(req.user.id);
   }
 
   @Get('bookmarks')
   @ApiOperation({ summary: 'Get bookmarked projects' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Bookmarked projects retrieved successfully' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Bookmarked projects retrieved successfully',
+    type: BookmarkedProjectsResponseDto
+  })
   async getBookmarkedProjects(
     @Request() req: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10
-  ) {
-    return this.freelancerService.getBookmarkedProjects(req.user.id, { page, limit });
+    @Query() queryDto: PaginationDto
+  ): Promise<BookmarkedProjectsResponseDto> {
+    return this.freelancerService.getBookmarkedProjects(req.user.id, queryDto);
   }
 }
