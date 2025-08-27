@@ -72,11 +72,6 @@ export class RegisterUserDto {
   @Type(() => LocationDto)
   location: LocationDto;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  dateOfBirth?: string;
-
   @ApiProperty({ 
     example: 'StrongPassword123!',
     description: 'Password must contain at least 8 characters with uppercase, lowercase, number and special character'
@@ -222,11 +217,6 @@ export class UpdateProfileDto {
   @ValidateNested()
   @Type(() => LocationDto)
   location?: LocationDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  dateOfBirth?: string;
 }
 
 export class UpdatePreferencesDto {

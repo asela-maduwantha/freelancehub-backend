@@ -77,8 +77,7 @@ export class AuthService {
     const profileData: any = {
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
-      location: registerDto.location,
-      dateOfBirth: registerDto.dateOfBirth ? new Date(registerDto.dateOfBirth) : undefined,
+      location: registerDto.location
     };
 
     // Only include phone if provided
