@@ -94,5 +94,8 @@ export default () => ({
   monitoring: {
     sentryDsn: process.env.SENTRY_DSN,
     logLevel: process.env.LOG_LEVEL || 'info',
+    enableDetailedErrors: process.env.NODE_ENV === 'development',
+    enableRequestLogging: process.env.ENABLE_REQUEST_LOGGING !== 'false',
+    enableDatabaseLogging: process.env.ENABLE_DATABASE_LOGGING !== 'false',
   }
 });

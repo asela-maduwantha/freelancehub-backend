@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -39,6 +39,7 @@ import {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private challenges = new Map<string, string>(); // In production, use Redis
 
   constructor(
@@ -49,6 +50,11 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterUserDto): Promise<{ message: string; verificationRequired: boolean }> {
+    // Validate required fields
+    if (!registerDto.location || !registerDto.location.country || !registerDto.location.city) {
+      throw new BadRequestException('Location with country and city is required');
+    }
+
     // Check if user already exists
     const existingUser = await this.userModel.findOne({
       $or: [
@@ -67,26 +73,27 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, 12);
 
-    // Create verification token
-    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
-    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
     // Create new user
+    const profileData: any = {
+      firstName: registerDto.firstName,
+      lastName: registerDto.lastName,
+      location: registerDto.location,
+      dateOfBirth: registerDto.dateOfBirth ? new Date(registerDto.dateOfBirth) : undefined,
+    };
+
+    // Only include phone if provided
+    if (registerDto.phone) {
+      profileData.phone = registerDto.phone;
+    }
+
     const user = new this.userModel({
       email: registerDto.email,
       username: registerDto.username,
       password: hashedPassword,
       roles: [registerDto.primaryRole],
-      profile: {
-        firstName: registerDto.firstName,
-        lastName: registerDto.lastName,
-        phone: registerDto.phone,
-        location: registerDto.location,
-        dateOfBirth: registerDto.dateOfBirth ? new Date(registerDto.dateOfBirth) : undefined,
-      },
+      profile: profileData,
       verification: {
-        emailVerificationToken,
-        emailVerificationExpires,
+        emailVerified: false,
       },
       activity: {
         lastLoginAt: new Date(),
@@ -95,13 +102,40 @@ export class AuthService {
       }
     });
 
+    try {
+      await user.save();
+    } catch (error) {
+      this.logger.error('Failed to save user during registration:', error);
+      
+      if (error.name === 'ValidationError') {
+        const validationErrors = Object.values(error.errors).map((err: any) => err.message);
+        throw new BadRequestException(`Validation failed: ${validationErrors.join(', ')}`);
+      }
+      
+      throw new BadRequestException('Failed to create user account');
+    }
+
+    // Generate and send email verification OTP
+    const otp = this.generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); 
+
+    user.verification.emailOtp = await bcrypt.hash(otp, 10);
+    user.verification.emailOtpExpires = expiresAt;
+    user.verification.emailOtpAttempts = 0;
+    
     await user.save();
 
-    // TODO: Send verification email
-    console.log(`Verification token for ${user.email}: ${emailVerificationToken}`);
+    try {
+      await this.emailService.sendEmailVerificationOtp(registerDto.email, otp, registerDto.firstName);
+    } catch (error) {
+      this.logger.error(`Failed to send verification email to ${registerDto.email}:`, error);
+      if (process.env.NODE_ENV === 'development') {
+        this.logger.log(`Development Mode - Email verification OTP for ${registerDto.email}: ${otp}`);
+      }
+    }
 
     return {
-      message: 'User registered successfully. Please check your email for verification.',
+      message: 'User registered successfully. Please check your email for the 6-digit verification code.',
       verificationRequired: true
     };
   }

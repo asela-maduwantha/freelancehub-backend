@@ -5,12 +5,22 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as compression from 'compression';
 import helmet from 'helmet';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { CustomLogger } from './common/logger/custom-logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Create app with custom logger
+  const app = await NestFactory.create(AppModule, {
+    logger: new CustomLogger(),
+  });
   
   // Get configuration service
   const configService = app.get(ConfigService);
+  
+  // Setup global error handling
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new LoggingInterceptor());
   
   // Global prefix
   app.setGlobalPrefix('api');
@@ -97,9 +107,16 @@ async function bootstrap() {
   
   console.log(`🚀 FreelanceHub backend is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  console.log(`🛡️ Error handling and logging initialized`);
+  console.log(`📝 All errors will be displayed in this terminal`);
 }
 
 bootstrap().catch((error) => {
-  console.error('Failed to start the application:', error);
+  console.error('💥 Failed to start the application:');
+  console.error('Error:', error.message);
+  if (error.stack) {
+    console.error('Stack trace:', error.stack);
+  }
+  console.error('🔍 Check your configuration and database connection');
   process.exit(1);
 });

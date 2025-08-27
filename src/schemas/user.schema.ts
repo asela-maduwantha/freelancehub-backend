@@ -15,7 +15,14 @@ export class Profile {
   @Prop({ validate: /^https?:\/\// })
   avatar?: string;
 
-  @Prop({ validate: /^\+[1-9]\d{1,14}$/ })
+  @Prop({ 
+    validate: {
+      validator: function(v: string) {
+        return !v || /^\+[1-9]\d{1,14}$/.test(v);
+      },
+      message: 'Phone number must be in valid international format (e.g., +1234567890)'
+    }
+  })
   phone?: string;
 
   @Prop()

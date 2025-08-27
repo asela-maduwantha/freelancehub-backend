@@ -21,6 +21,8 @@ import { AdminModule } from './admin/admin.module';
 import { PublicModule } from './public/public.module';
 import { FreelancerModule } from './freelancer/freelancer.module';
 import { ClientModule } from './client/client.module';
+import { UnhandledExceptionsService } from './common/services/unhandled-exceptions.service';
+import { DatabaseHealthService } from './common/services/database-health.service';
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -99,6 +101,6 @@ import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
     ClientModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, UnhandledExceptionsService, DatabaseHealthService],
 })
 export class AppModule {}
