@@ -4,7 +4,6 @@ import { Model, Types } from 'mongoose';
 import { FileUpload, FileUploadDocument } from '../schemas/file-upload.schema';
 import { FileUploadDto, FileFilterDto } from './dto/upload.dto';
 import * as fs from 'fs';
-import * as path from 'path';
 import { BlobServiceClient } from '@azure/storage-blob';
 import { ConfigService } from '@nestjs/config';
 
@@ -13,19 +12,20 @@ export class UploadsService {
   private readonly logger = new Logger(UploadsService.name);
   private blobServiceClient: BlobServiceClient;
   private containerClient: any;
+  private blobUrl: string;
 
   constructor(
     @InjectModel(FileUpload.name) private fileUploadModel: Model<FileUploadDocument>,
     private configService: ConfigService,
   ) {
-    const accountName = this.configService.get<string>('azure.accountName');
-    const accountKey = this.configService.get<string>('azure.accountKey');
-    const containerName = this.configService.get<string>('azure.containerName');
-    const blobUrl = this.configService.get<string>('azure.blobUrl');
-    const connStr = `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=${accountKey};EndpointSuffix=core.windows.net`;
-    this.blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
-    this.containerClient = this.blobServiceClient.getContainerClient(containerName);
-    this.blobUrl = blobUrl;
+  const accountName = this.configService.get<string>('azure.accountName');
+  const accountKey = this.configService.get<string>('azure.accountKey');
+  const containerName = this.configService.get<string>('azure.containerName') ?? '';
+  const blobUrl = this.configService.get<string>('azure.blobUrl') ?? '';
+  const connStr = `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=${accountKey};EndpointSuffix=core.windows.net`;
+  this.blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
+  this.containerClient = this.blobServiceClient.getContainerClient(containerName);
+  this.blobUrl = blobUrl;
   }
 
   async uploadFile(
