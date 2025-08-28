@@ -287,8 +287,7 @@ export class FreelancerProfile {
 
 export const FreelancerProfileSchema = SchemaFactory.createForClass(FreelancerProfile);
 
-// Indexes
-FreelancerProfileSchema.index({ userId: 1 }, { unique: true });
+
 FreelancerProfileSchema.index({ 'skills.primary': 1, 'professional.availability': 1 });
 FreelancerProfileSchema.index({ 'skills.categories': 1 });
 FreelancerProfileSchema.index({ 'stats.averageRating': -1, 'stats.totalReviews': -1 });

@@ -100,4 +100,3 @@ PaymentSchema.index({ stripeChargeId: 1 }, { sparse: true });
 PaymentSchema.index({ status: 1, createdAt: -1 });
 PaymentSchema.index({ type: 1, status: 1 });
 PaymentSchema.index({ processedAt: -1 });
-PaymentSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });

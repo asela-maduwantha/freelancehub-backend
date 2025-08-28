@@ -276,10 +276,7 @@ export class Contract {
 
 export const ContractSchema = SchemaFactory.createForClass(Contract);
 
-// Indexes
-ContractSchema.index({ projectId: 1 }, { unique: true });
-ContractSchema.index({ clientId: 1, status: 1 });
-ContractSchema.index({ freelancerId: 1, status: 1 });
+
 ContractSchema.index({ status: 1, createdAt: -1 });
 ContractSchema.index({ startDate: -1 });
 
