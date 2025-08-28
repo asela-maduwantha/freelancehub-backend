@@ -24,7 +24,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/decorators/roles.decorator';
 import { ContractsService } from './contracts.service';
 import {
   CreateContractDto,
@@ -47,7 +47,7 @@ export class ContractsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiOperation({ summary: 'Create a new contract from accepted proposal' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -127,7 +127,7 @@ export class ContractsController {
 
   @Put(':id')
   @UseGuards(RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiOperation({ summary: 'Update contract details (draft contracts only)' })
   @ApiParam({ name: 'id', description: 'Contract ID' })
   @ApiResponse({
@@ -147,7 +147,7 @@ export class ContractsController {
 
   @Post(':id/activate')
   @UseGuards(RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiOperation({ summary: 'Activate contract (move from draft to active)' })
   @ApiParam({ name: 'id', description: 'Contract ID' })
   @ApiResponse({
@@ -163,7 +163,7 @@ export class ContractsController {
 
   @Post(':id/milestones/:milestoneIndex/submit')
   @UseGuards(RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiOperation({ summary: 'Submit milestone deliverables' })
   @ApiParam({ name: 'id', description: 'Contract ID' })
   @ApiParam({ name: 'milestoneIndex', description: 'Milestone index', type: 'number' })
@@ -185,7 +185,7 @@ export class ContractsController {
 
   @Post(':id/milestones/:milestoneIndex/review')
   @UseGuards(RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiOperation({ summary: 'Review submitted milestone' })
   @ApiParam({ name: 'id', description: 'Contract ID' })
   @ApiParam({ name: 'milestoneIndex', description: 'Milestone index', type: 'number' })
@@ -272,7 +272,7 @@ export class ContractsController {
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiOperation({ summary: 'Delete contract (draft contracts only)' })
   @ApiParam({ name: 'id', description: 'Contract ID' })
   @ApiResponse({

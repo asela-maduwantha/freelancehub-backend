@@ -16,7 +16,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/decorators/roles.decorator';
 import { PaymentsService } from './payments.service';
 
 interface CreatePaymentIntentDto {
@@ -41,7 +41,7 @@ export class PaymentsController {
 
   @Post('intent')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create payment intent for contract payment' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Payment intent created successfully' })
@@ -65,7 +65,7 @@ export class PaymentsController {
 
   @Post('escrow')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create escrow payment' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Escrow payment created successfully' })
@@ -83,7 +83,7 @@ export class PaymentsController {
 
   @Post('escrow/:paymentId/release')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Release escrow payment to freelancer' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Escrow payment released successfully' })
@@ -96,7 +96,7 @@ export class PaymentsController {
 
   @Post(':paymentId/refund')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Refund a payment' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Payment refunded successfully' })
@@ -132,7 +132,7 @@ export class PaymentsController {
 
   @Post('connected-account')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create Stripe connected account for freelancer' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Connected account created successfully' })
@@ -142,7 +142,7 @@ export class PaymentsController {
 
   @Get('account-status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get Stripe account status' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Account status retrieved successfully' })

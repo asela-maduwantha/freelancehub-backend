@@ -19,13 +19,13 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../modules/auth/guards/roles.guard';
-import { Roles } from '../modules/auth/decorators/roles.decorator';
+import { Role } from '../modules/auth/decorators/roles.decorator';
 import { ClientService } from './client.service';
 
 @ApiTags('Client')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('client')
+@Role('client')
 @Controller({ path: 'client', version: '1' })
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}

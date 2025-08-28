@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../modules/auth/guards/roles.guard';
-import { Roles } from '../modules/auth/decorators/roles.decorator';
+import { Role } from '../modules/auth/decorators/roles.decorator';
 import { FreelancerService } from './freelancer.service';
 import {
   FreelancerDashboardDto,
@@ -54,7 +54,7 @@ import {
 @ApiTags('Freelancer')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('freelancer')
+@Role('freelancer')
 @Controller({ path: 'freelancer', version: '1' })
 export class FreelancerController {
   constructor(private readonly freelancerService: FreelancerService) {}

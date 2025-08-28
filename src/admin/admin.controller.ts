@@ -13,13 +13,13 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@ne
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../modules/auth/guards/roles.guard';
-import { Roles } from '../modules/auth/decorators/roles.decorator';
+import { Role } from '../modules/auth/decorators/roles.decorator';
 import { AdminStatsDto, UserManagementDto, UserActionDto } from './dto/admin.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Role('admin')
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}

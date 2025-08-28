@@ -15,7 +15,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/decorators/roles.decorator';
 import { ProjectsService } from './projects.service';
 import {
   CreateProjectDto,
@@ -32,7 +32,7 @@ export class ProjectsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new project' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Project created successfully' })
@@ -69,7 +69,7 @@ export class ProjectsController {
 
   @Get('my-projects')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user projects' })
   @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
@@ -121,7 +121,7 @@ export class ProjectsController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a project' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Project updated successfully' })
@@ -137,7 +137,7 @@ export class ProjectsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a project' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Project deleted successfully' })
@@ -149,7 +149,7 @@ export class ProjectsController {
 
   @Post(':id/proposals')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Submit a proposal to a project' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Proposal submitted successfully' })
@@ -165,7 +165,7 @@ export class ProjectsController {
 
   @Get(':id/proposals')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get proposals for a project' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Proposals retrieved successfully' })
@@ -177,7 +177,7 @@ export class ProjectsController {
 
   @Post('proposals/:proposalId/accept')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Accept a proposal' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Proposal accepted successfully' })
@@ -189,7 +189,7 @@ export class ProjectsController {
 
   @Post('proposals/:proposalId/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Reject a proposal' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Proposal rejected successfully' })
@@ -201,7 +201,7 @@ export class ProjectsController {
 
   @Get('freelancer/proposals')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get freelancer proposals' })
   @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
@@ -212,7 +212,7 @@ export class ProjectsController {
 
   @Post(':id/complete')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark project as completed' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Project completed successfully' })
@@ -224,7 +224,7 @@ export class ProjectsController {
 
   @Get(':id/analytics')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get project analytics' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Project analytics retrieved successfully' })
@@ -236,7 +236,7 @@ export class ProjectsController {
 
   @Get(':id/bookmark')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Bookmark a project' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Project bookmarked successfully' })
@@ -246,7 +246,7 @@ export class ProjectsController {
 
   @Delete(':id/bookmark')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove bookmark from project' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Bookmark removed successfully' })
@@ -256,7 +256,7 @@ export class ProjectsController {
 
   @Get('recommended')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('freelancer')
+  @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get recommended projects for freelancer' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -267,7 +267,7 @@ export class ProjectsController {
 
   @Get('templates')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get project templates' })
   @ApiQuery({ name: 'category', required: false, type: String })
@@ -278,7 +278,7 @@ export class ProjectsController {
 
   @Post(':id/invite')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('client')
+  @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Invite freelancer to project' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Freelancer invited successfully' })
