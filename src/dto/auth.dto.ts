@@ -311,6 +311,7 @@ export class LoginResponse {
     role: string;
     profile: any;
     verification: any;
+    twoFactorEnabled?: boolean;
   };
 
   @ApiProperty()

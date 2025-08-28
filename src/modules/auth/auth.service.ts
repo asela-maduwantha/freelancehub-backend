@@ -203,6 +203,7 @@ await user.save();
           emailVerified: user.verification.emailVerified,
           phoneVerified: user.verification.phoneVerified
         },
+        twoFactorEnabled: user.twoFactorAuth.enabled,
       },
       expiresIn: 900 
     };
