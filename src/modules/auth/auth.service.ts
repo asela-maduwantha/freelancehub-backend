@@ -90,7 +90,7 @@ export class AuthService {
       email: registerDto.email,
       username: registerDto.username,
       password: hashedPassword,
-      roles: [registerDto.primaryRole],
+      role: registerDto.primaryRole,
       profile: profileData,
       verification: {
         emailVerified: false,
