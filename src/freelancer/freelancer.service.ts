@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
+import { FreelancerProfile, FreelancerProfileDocument } from '../schemas/freelancer-profile.schema';
 import { Project, ProjectDocument } from '../schemas/project.schema';
 import { Contract, ContractDocument } from '../schemas/contract.schema';
 import { Payment, PaymentDocument } from '../schemas/payment.schema';
@@ -24,12 +25,24 @@ import {
   PaginationDto,
   BookmarkedProjectsResponseDto,
   ActivityItemDto,
+  // New onboarding DTOs
+  CreateCompleteFreelancerProfileDto,
+  CreateProfessionalProfileDto,
+  CreateSkillsProfileDto,
+  CreateLanguagesProfileDto,
+  CreatePricingProfileDto,
+  CreateEducationDto,
+  CreateCertificationDto,
+  UpdateVisibilityDto,
+  FreelancerProfileCompletionDto,
+  CompleteFreelancerProfileResponseDto,
 } from '../dto/freelancer';
 
 @Injectable()
 export class FreelancerService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(FreelancerProfile.name) private freelancerProfileModel: Model<FreelancerProfileDocument>,
     @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
     @InjectModel(Contract.name) private contractModel: Model<ContractDocument>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
@@ -606,5 +619,269 @@ export class FreelancerService {
   private async getRecentMessages(freelancerId: string, limit: number) {
     // This would need to be implemented when you have a proper messaging system
     return [];
+  }
+
+  // =============== ONBOARDING METHODS ===============
+
+  async createCompleteFreelancerProfile(userId: string, profileDto: CreateCompleteFreelancerProfileDto): Promise<CompleteFreelancerProfileResponseDto> {
+    // Verify user is a freelancer
+    const user = await this.userModel.findById(userId);
+    if (!user || !user.role.includes('freelancer')) {
+      throw new ForbiddenException('Only freelancers can create freelancer profiles');
+    }
+
+    // Check if profile already exists
+    const existingProfile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (existingProfile) {
+      throw new BadRequestException('Freelancer profile already exists. Use update endpoints instead.');
+    }
+
+    // Create new freelancer profile
+    const profileData = {
+      userId: new Types.ObjectId(userId),
+      professional: {
+        title: profileDto.professional.title,
+        description: profileDto.professional.description,
+        experience: profileDto.professional.experience,
+        availability: profileDto.professional.availability || 'available',
+        workingHours: {
+          timezone: profileDto.professional.workingHours.timezone,
+          schedule: {
+            monday: profileDto.professional.workingHours.monday,
+            tuesday: profileDto.professional.workingHours.tuesday,
+            wednesday: profileDto.professional.workingHours.wednesday,
+            thursday: profileDto.professional.workingHours.thursday,
+            friday: profileDto.professional.workingHours.friday,
+            saturday: profileDto.professional.workingHours.saturday,
+            sunday: profileDto.professional.workingHours.sunday,
+          },
+        },
+      },
+      skills: profileDto.skills,
+      languages: profileDto.languages.languages,
+      pricing: profileDto.pricing,
+      visibility: profileDto.visibility || {
+        searchable: true,
+        showInRecommendations: true,
+        showPortfolio: true,
+        showRates: true,
+        showContactInfo: true,
+      },
+      portfolio: [],
+      education: [],
+      certifications: [],
+      stats: {
+        totalEarnings: 0,
+        totalProjects: 0,
+        completedProjects: 0,
+        ongoingProjects: 0,
+        totalReviews: 0,
+        averageRating: 0,
+        successRate: 100,
+        responseTime: 0,
+        repeatClientRate: 0,
+        profileCreatedAt: new Date(),
+      },
+      isActive: true,
+    };
+
+    const newProfile = new this.freelancerProfileModel(profileData);
+    await newProfile.save();
+
+    return this.formatCompleteProfileResponse(newProfile);
+  }
+
+  async getCompleteFreelancerProfile(userId: string): Promise<CompleteFreelancerProfileResponseDto> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found');
+    }
+
+    return this.formatCompleteProfileResponse(profile);
+  }
+
+  async updateProfessionalProfile(userId: string, professionalDto: CreateProfessionalProfileDto): Promise<{ success: boolean; message: string }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    profile.professional = {
+      title: professionalDto.title,
+      description: professionalDto.description,
+      experience: professionalDto.experience,
+      availability: professionalDto.availability || 'available',
+      workingHours: {
+        timezone: professionalDto.workingHours.timezone,
+        schedule: {
+          monday: professionalDto.workingHours.monday,
+          tuesday: professionalDto.workingHours.tuesday,
+          wednesday: professionalDto.workingHours.wednesday,
+          thursday: professionalDto.workingHours.thursday,
+          friday: professionalDto.workingHours.friday,
+          saturday: professionalDto.workingHours.saturday,
+          sunday: professionalDto.workingHours.sunday,
+        },
+      },
+    };
+    await profile.save();
+
+    return { success: true, message: 'Professional profile updated successfully' };
+  }
+
+  async updateSkillsProfile(userId: string, skillsDto: CreateSkillsProfileDto): Promise<{ success: boolean; message: string }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    profile.skills = skillsDto;
+    await profile.save();
+
+    return { success: true, message: 'Skills profile updated successfully' };
+  }
+
+  async updateLanguagesProfile(userId: string, languagesDto: CreateLanguagesProfileDto): Promise<{ success: boolean; message: string }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    profile.languages = languagesDto.languages;
+    await profile.save();
+
+    return { success: true, message: 'Languages profile updated successfully' };
+  }
+
+  async updatePricingProfile(userId: string, pricingDto: CreatePricingProfileDto): Promise<{ success: boolean; message: string }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    profile.pricing = pricingDto;
+    await profile.save();
+
+    return { success: true, message: 'Pricing profile updated successfully' };
+  }
+
+  async addEducation(userId: string, educationDto: CreateEducationDto): Promise<{ success: boolean; message: string; education: any }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    const education = {
+      ...educationDto,
+      issueDate: new Date(educationDto.startYear, 0, 1),
+    };
+
+    profile.education.push(education);
+    await profile.save();
+
+    return { success: true, message: 'Education added successfully', education };
+  }
+
+  async addCertification(userId: string, certificationDto: CreateCertificationDto): Promise<{ success: boolean; message: string; certification: any }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    const certification = {
+      ...certificationDto,
+      issueDate: new Date(certificationDto.issueDate),
+      expirationDate: certificationDto.expirationDate ? new Date(certificationDto.expirationDate) : undefined,
+    };
+
+    profile.certifications.push(certification);
+    await profile.save();
+
+    return { success: true, message: 'Certification added successfully', certification };
+  }
+
+  async updateVisibilitySettings(userId: string, visibilityDto: UpdateVisibilityDto): Promise<{ success: boolean; message: string }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    profile.visibility = visibilityDto;
+    await profile.save();
+
+    return { success: true, message: 'Visibility settings updated successfully' };
+  }
+
+  async getProfileCompletion(userId: string): Promise<FreelancerProfileCompletionDto> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found');
+    }
+
+    const sectionsCompleted = {
+      professional: !!(profile.professional?.title && profile.professional?.description),
+      skills: !!(profile.skills?.primary?.length > 0 && profile.skills?.categories?.length > 0),
+      languages: !!(profile.languages?.length > 0),
+      pricing: !!(profile.pricing?.hourlyRate || (profile.pricing?.fixedPricePackages && profile.pricing.fixedPricePackages.length > 0)),
+      portfolio: profile.portfolio?.length > 0,
+      education: profile.education?.length > 0,
+      certifications: profile.certifications?.length > 0,
+    };
+
+    const suggestions: string[] = [];
+    if (!sectionsCompleted.pricing) suggestions.push('Add pricing information to attract clients');
+    if (!sectionsCompleted.portfolio) suggestions.push('Upload portfolio items to showcase your work');
+    if (!sectionsCompleted.education) suggestions.push('Add education background to build credibility');
+    if (!sectionsCompleted.certifications) suggestions.push('Add certifications to demonstrate expertise');
+
+    return {
+      completionPercentage: profile.completionPercentage,
+      sectionsCompleted,
+      suggestions,
+    };
+  }
+
+  async addPortfolioItemToProfile(userId: string, portfolioDto: PortfolioItemDto): Promise<{ success: boolean; message: string; item: any }> {
+    const profile = await this.freelancerProfileModel.findOne({ userId: new Types.ObjectId(userId) });
+    if (!profile) {
+      throw new NotFoundException('Freelancer profile not found. Create a profile first.');
+    }
+
+    const portfolioItem = {
+      ...portfolioDto,
+      images: portfolioDto.images || [],
+      completedAt: portfolioDto.completedAt ? new Date(portfolioDto.completedAt) : new Date(),
+      category: portfolioDto.projectType || 'other',
+      isPublic: true,
+    };
+
+    profile.portfolio.push(portfolioItem);
+    await profile.save();
+
+    return { success: true, message: 'Portfolio item added successfully', item: portfolioItem };
+  }
+
+  // Helper method to format complete profile response
+  private formatCompleteProfileResponse(profile: FreelancerProfileDocument): CompleteFreelancerProfileResponseDto {
+    return {
+      id: (profile._id as Types.ObjectId).toString(),
+      userId: profile.userId.toString(),
+      professional: profile.professional,
+      skills: profile.skills,
+      languages: profile.languages,
+      pricing: profile.pricing,
+      portfolio: profile.portfolio.map((item: any) => ({
+        ...item.toObject(),
+        id: item._id?.toString(),
+        createdAt: item.completedAt || new Date(),
+      })),
+      education: profile.education,
+      certifications: profile.certifications,
+      visibility: profile.visibility,
+      completionPercentage: profile.completionPercentage,
+      isActive: profile.isActive,
+      createdAt: (profile as any).createdAt || new Date(),
+      updatedAt: (profile as any).updatedAt || new Date(),
+    };
   }
 }

@@ -107,15 +107,29 @@ export class AuthController {
 
   @Post('verify-email-otp')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify email using OTP' })
+  @ApiOperation({ summary: 'Verify email using OTP and get access tokens' })
   @ApiResponse({ 
     status: 200, 
-    description: 'Email verified successfully',
+    description: 'Email verified successfully with authentication tokens',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean' },
-        message: { type: 'string' }
+        message: { type: 'string' },
+        accessToken: { type: 'string', description: 'JWT access token for immediate login' },
+        refreshToken: { type: 'string', description: 'Refresh token for token renewal' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            username: { type: 'string' },
+            role: { type: 'string' },
+            profile: { type: 'object' },
+            verification: { type: 'object' }
+          }
+        },
+        expiresIn: { type: 'number', description: 'Token expiry time in seconds' }
       }
     }
   })

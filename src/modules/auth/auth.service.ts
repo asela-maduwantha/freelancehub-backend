@@ -599,7 +599,7 @@ await user.save();
     };
   }
 
-  async verifyEmailOtp(verifyOtpDto: VerifyEmailOtpDto): Promise<{ success: boolean; message: string }> {
+  async verifyEmailOtp(verifyOtpDto: VerifyEmailOtpDto): Promise<{ success: boolean; message: string; accessToken?: string; refreshToken?: string; user?: any; expiresIn?: number }> {
     const { email, otp } = verifyOtpDto;
     
     const user = await this.userModel.findOne({ email });
@@ -642,11 +642,50 @@ await user.save();
     user.verification.emailVerificationToken = undefined;
     user.verification.emailVerificationExpires = undefined;
     
+    // Update user activity
+    user.activity.lastLoginAt = new Date();
+    user.activity.lastActiveAt = new Date();
+    user.activity.loginCount = (user.activity.loginCount || 0) + 1;
+    
+    await user.save();
+
+    // Generate tokens for immediate login after verification
+    const payload = { 
+      sub: (user._id as any).toString(), 
+      email: user.email, 
+      username: user.username,
+      role: user.role 
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = crypto.randomBytes(64).toString('hex');
+
+    user.refreshTokens = user.refreshTokens || [];
+    user.refreshTokens.push(refreshToken);
+
+    if (user.refreshTokens.length > 5) {
+      user.refreshTokens = user.refreshTokens.slice(-5);
+    }
+
     await user.save();
 
     return { 
       success: true, 
-      message: 'Email verified successfully' 
+      message: 'Email verified successfully',
+      accessToken,
+      refreshToken,
+      user: {
+        id: (user._id as any).toString(),
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        profile: user.profile,
+        verification: {
+          emailVerified: user.verification.emailVerified,
+          phoneVerified: user.verification.phoneVerified
+        },
+      },
+      expiresIn: 900 // 15 minutes
     };
   }
 
