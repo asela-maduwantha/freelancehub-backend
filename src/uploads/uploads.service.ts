@@ -9,31 +9,32 @@ import { Model, Types } from 'mongoose';
 import { FileUpload, FileUploadDocument } from '../schemas/file-upload.schema';
 import { FileUploadDto, FileFilterDto } from './dto/upload.dto';
 import * as fs from 'fs';
-import { BlobServiceClient } from '@azure/storage-blob';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UploadsService {
   private readonly logger = new Logger(UploadsService.name);
-  private blobServiceClient: BlobServiceClient;
-  private containerClient: any;
-  private blobUrl: string;
+  private s3Client: S3Client;
+  private bucketName: string;
 
   constructor(
     @InjectModel(FileUpload.name)
     private fileUploadModel: Model<FileUploadDocument>,
     private configService: ConfigService,
   ) {
-    const accountName = this.configService.get<string>('azure.accountName');
-    const accountKey = this.configService.get<string>('azure.accountKey');
-    const containerName =
-      this.configService.get<string>('azure.containerName') ?? '';
-    const blobUrl = this.configService.get<string>('azure.blobUrl') ?? '';
-    const connStr = `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=${accountKey};EndpointSuffix=core.windows.net`;
-    this.blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
-    this.containerClient =
-      this.blobServiceClient.getContainerClient(containerName);
-    this.blobUrl = blobUrl;
+    const accessKeyId = this.configService.get<string>('aws.accessKeyId');
+    const secretAccessKey = this.configService.get<string>('aws.secretAccessKey');
+    const region = this.configService.get<string>('aws.region') || 'us-east-1';
+    this.bucketName = this.configService.get<string>('aws.s3Bucket') || 'freelancehub-uploads';
+
+    this.s3Client = new S3Client({
+      region,
+      credentials: {
+        accessKeyId: accessKeyId || '',
+        secretAccessKey: secretAccessKey || '',
+      },
+    });
   }
 
   async uploadFile(
@@ -48,34 +49,42 @@ export class UploadsService {
 
       this.validateFileType(file, uploadDto.category);
 
-      const blobName = file.filename || file.originalname;
-      if (!blobName) {
-        throw new BadRequestException('File name is missing');
-      }
-      const blockBlobClient = this.containerClient.getBlockBlobClient(blobName);
+      const fileName = file.filename || `${Date.now()}-${file.originalname}`;
+      const key = `uploads/${userId}/${fileName}`;
 
-      await blockBlobClient.uploadData(file.buffer, {
-        blobHTTPHeaders: { blobContentType: file.mimetype },
+      const uploadCommand = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        Metadata: {
+          originalName: file.originalname,
+          uploadedBy: userId,
+        },
       });
 
+      await this.s3Client.send(uploadCommand);
+
+      const fileUrl = `https://${this.bucketName}.s3.${this.configService.get('aws.region')}.amazonaws.com/${key}`;
+
       const fileUpload = new this.fileUploadModel({
-        filename: blobName,
+        filename: fileName,
         originalName: file.originalname,
         mimetype: file.mimetype,
         size: file.size,
-        path: blobName,
+        path: key,
         uploadedBy: new Types.ObjectId(userId),
         category: uploadDto.category,
         relatedTo: uploadDto.relatedTo
           ? new Types.ObjectId(uploadDto.relatedTo)
           : undefined,
         onModel: uploadDto.onModel,
-        url: `${this.blobUrl}/${blobName}`,
+        url: fileUrl,
       });
 
       const savedFile = await fileUpload.save();
       this.logger.log(
-        `File uploaded to Azure: ${file.originalname} by user ${userId}`,
+        `File uploaded to S3: ${file.originalname} by user ${userId}`,
       );
       return savedFile;
     } catch (error) {
@@ -165,21 +174,22 @@ export class UploadsService {
     file.isActive = false;
     await file.save();
 
-    // Delete from Azure Blob Storage
+    // Delete from S3
     try {
-      const blockBlobClient = this.containerClient.getBlockBlobClient(
-        file.filename,
-      );
-      await blockBlobClient.deleteIfExists();
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: file.path, // path now contains the S3 key
+      });
+      await this.s3Client.send(deleteCommand);
     } catch (error) {
       this.logger.warn(
-        `Failed to delete blob ${file.filename}:`,
+        `Failed to delete S3 object ${file.path}:`,
         error.message,
       );
     }
 
     this.logger.log(
-      `File deleted from Azure: ${file.originalName} by user ${userId}`,
+      `File deleted from S3: ${file.originalName} by user ${userId}`,
     );
   }
 

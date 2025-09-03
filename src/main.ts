@@ -8,8 +8,12 @@ import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { CustomLogger } from './common/logger/custom-logger.service';
+import { validateEnvironment } from './config/environment-validation';
 
 async function bootstrap() {
+  // Validate environment variables before starting
+  validateEnvironment();
+
   // Create app with custom logger
   const app = await NestFactory.create(AppModule, {
     logger: new CustomLogger(),
@@ -108,7 +112,10 @@ async function bootstrap() {
     });
   }
 
-  const port = 8000;
+  const port = configService.get('port') || 8000;
+
+  // Enable graceful shutdown
+  app.enableShutdownHooks();
 
   await app.listen(port);
 
@@ -116,8 +123,25 @@ async function bootstrap() {
     `🚀 FreelanceHub backend is running on: http://localhost:${port}`,
   );
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  console.log(`🏥 Health Check: http://localhost:${port}/api/health`);
   console.log(`🛡️ Error handling and logging initialized`);
   console.log(`📝 All errors will be displayed in this terminal`);
+
+  // Handle graceful shutdown
+  const shutdown = async (signal: string) => {
+    console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+    try {
+      await app.close();
+      console.log('✅ Application closed gracefully');
+      process.exit(0);
+    } catch (error) {
+      console.error('❌ Error during shutdown:', error);
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 bootstrap().catch((error) => {

@@ -23,6 +23,8 @@ import { FreelancerModule } from './freelancer/freelancer.module';
 import { ClientModule } from './client/client.module';
 import { UnhandledExceptionsService } from './common/services/unhandled-exceptions.service';
 import { DatabaseHealthService } from './common/services/database-health.service';
+import { AppHealthService } from './common/services/app-health.service';
+import { HealthController } from './common/controllers/health.controller';
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -111,7 +113,7 @@ import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
     FreelancerModule,
     ClientModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, UnhandledExceptionsService, DatabaseHealthService],
+  controllers: [AppController, HealthController],
+  providers: [AppService, UnhandledExceptionsService, DatabaseHealthService, AppHealthService],
 })
 export class AppModule {}

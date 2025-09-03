@@ -27,7 +27,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.658.0",
     "@faker-js/faker": "^10.0.0",
-    "@nestjs/cache-manager": "^2.2.2",
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^11.0.1",

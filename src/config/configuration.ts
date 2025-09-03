@@ -10,8 +10,6 @@ export default () => ({
       process.env.MONGODB_TEST_URI ||
       'mongodb://localhost:27017/freelancehub_test',
     options: {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
@@ -54,11 +52,11 @@ export default () => ({
     apiVersion: '2023-10-16' as const,
   },
 
-  azure: {
-    accountName: process.env.AZURE_STORAGE_ACCOUNT_NAME,
-    accountKey: process.env.AZURE_STORAGE_ACCOUNT_KEY,
-    containerName: process.env.AZURE_STORAGE_CONTAINER_NAME,
-    blobUrl: process.env.AZURE_BLOB_URL,
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION || 'us-east-1',
+    s3Bucket: process.env.AWS_S3_BUCKET || 'freelancehub-uploads',
   },
 
   email: {
