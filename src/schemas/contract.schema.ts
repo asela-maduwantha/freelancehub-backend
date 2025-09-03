@@ -54,18 +54,28 @@ export class Milestone {
   @Prop({ type: [String], required: true })
   deliverables: string[];
 
-  @Prop({ 
-    enum: ['pending', 'in_progress', 'submitted', 'under_review', 'approved', 'rejected', 'paid'], 
-    default: 'pending' 
+  @Prop({
+    enum: [
+      'pending',
+      'in_progress',
+      'submitted',
+      'under_review',
+      'approved',
+      'rejected',
+      'paid',
+    ],
+    default: 'pending',
   })
   status: string;
 
   @Prop({
-    type: [{
-      files: [String],
-      notes: { type: String, maxlength: 1000 },
-      submittedAt: { type: Date, default: Date.now }
-    }]
+    type: [
+      {
+        files: [String],
+        notes: { type: String, maxlength: 1000 },
+        submittedAt: { type: Date, default: Date.now },
+      },
+    ],
   })
   submissions: {
     files: string[];
@@ -115,13 +125,21 @@ export class Escrow {
   @Prop({ default: 0.029 }) // 2.9% Stripe fee
   stripeFeeRate: number;
 
-  @Prop({ default: 0.30 }) // $0.30 Stripe fixed fee
+  @Prop({ default: 0.3 }) // $0.30 Stripe fixed fee
   stripeFixedFee: number;
 }
 
 @Schema({ _id: false })
 export class ContractModification {
-  @Prop({ enum: ['scope_change', 'timeline_extension', 'budget_increase', 'milestone_addition'], required: true })
+  @Prop({
+    enum: [
+      'scope_change',
+      'timeline_extension',
+      'budget_increase',
+      'milestone_addition',
+    ],
+    required: true,
+  })
   type: string;
 
   @Prop({ required: true, maxlength: 1000 })
@@ -173,12 +191,14 @@ export class PerformanceMetrics {
   lastActivityAt?: Date;
 
   @Prop({
-    type: [{
-      date: { type: Date, default: Date.now },
-      hoursWorked: { type: Number, default: 0 },
-      description: String,
-      screenshots: [String]
-    }]
+    type: [
+      {
+        date: { type: Date, default: Date.now },
+        hoursWorked: { type: Number, default: 0 },
+        description: String,
+        screenshots: [String],
+      },
+    ],
   })
   timeEntries: {
     date: Date;
@@ -206,10 +226,13 @@ export class Contract {
   @Prop({ type: ContractTerms, required: true })
   terms: ContractTerms;
 
-  @Prop({ 
-    type: [Milestone], 
-    required: true, 
-    validate: [(val: Milestone[]) => val.length > 0, 'At least one milestone required'] 
+  @Prop({
+    type: [Milestone],
+    required: true,
+    validate: [
+      (val: Milestone[]) => val.length > 0,
+      'At least one milestone required',
+    ],
   })
   milestones: Milestone[];
 
@@ -219,7 +242,10 @@ export class Contract {
   @Prop({ type: Escrow, default: {} })
   escrow: Escrow;
 
-  @Prop({ enum: ['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'], default: 'draft' })
+  @Prop({
+    enum: ['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'],
+    default: 'draft',
+  })
   status: string;
 
   @Prop({ default: Date.now })
@@ -276,32 +302,39 @@ export class Contract {
 
 export const ContractSchema = SchemaFactory.createForClass(Contract);
 
-
 ContractSchema.index({ status: 1, createdAt: -1 });
 ContractSchema.index({ startDate: -1 });
 
 // Virtual for contract duration
-ContractSchema.virtual('duration').get(function() {
+ContractSchema.virtual('duration').get(function () {
   const start = this.startDate;
   const end = this.endDate || new Date();
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 });
 
 // Virtual for completion percentage
-ContractSchema.virtual('completionPercentage').get(function() {
+ContractSchema.virtual('completionPercentage').get(function () {
   if (this.milestones.length === 0) return 0;
-  const completedMilestones = this.milestones.filter(m => m.status === 'approved' || m.status === 'paid');
-  return Math.round((completedMilestones.length / this.milestones.length) * 100);
+  const completedMilestones = this.milestones.filter(
+    (m) => m.status === 'approved' || m.status === 'paid',
+  );
+  return Math.round(
+    (completedMilestones.length / this.milestones.length) * 100,
+  );
 });
 
 // Pre-save middleware to update current milestone
-ContractSchema.pre('save', function(next) {
+ContractSchema.pre('save', function (next) {
   if (this.isModified('milestones')) {
-    const inProgressIndex = this.milestones.findIndex(m => m.status === 'in_progress');
+    const inProgressIndex = this.milestones.findIndex(
+      (m) => m.status === 'in_progress',
+    );
     if (inProgressIndex !== -1) {
       this.currentMilestone = inProgressIndex;
     } else {
-      const pendingIndex = this.milestones.findIndex(m => m.status === 'pending');
+      const pendingIndex = this.milestones.findIndex(
+        (m) => m.status === 'pending',
+      );
       this.currentMilestone = pendingIndex !== -1 ? pendingIndex : 0;
     }
   }
@@ -309,8 +342,12 @@ ContractSchema.pre('save', function(next) {
 });
 
 // Pre-save middleware to set completion date
-ContractSchema.pre('save', function(next) {
-  if (this.isModified('status') && this.status === 'completed' && !this.completedAt) {
+ContractSchema.pre('save', function (next) {
+  if (
+    this.isModified('status') &&
+    this.status === 'completed' &&
+    !this.completedAt
+  ) {
     this.completedAt = new Date();
   }
   next();

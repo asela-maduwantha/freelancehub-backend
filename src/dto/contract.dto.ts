@@ -24,7 +24,11 @@ export class ContractTermsDto {
   @Min(1)
   totalAmount: number;
 
-  @ApiProperty({ description: 'Currency', enum: ['USD', 'LKR'], default: 'USD' })
+  @ApiProperty({
+    description: 'Currency',
+    enum: ['USD', 'LKR'],
+    default: 'USD',
+  })
   @IsEnum(['USD', 'LKR'])
   currency: string = 'USD';
 
@@ -60,13 +64,21 @@ export class ContractTermsDto {
   @IsDateString()
   deadline?: string;
 
-  @ApiProperty({ description: 'Number of revisions allowed', minimum: 0, maximum: 10, default: 2 })
+  @ApiProperty({
+    description: 'Number of revisions allowed',
+    minimum: 0,
+    maximum: 10,
+    default: 2,
+  })
   @IsNumber()
   @Min(0)
   @Max(10)
   revisions: number = 2;
 
-  @ApiPropertyOptional({ description: 'Additional contract terms', maxLength: 1000 })
+  @ApiPropertyOptional({
+    description: 'Additional contract terms',
+    maxLength: 1000,
+  })
   @IsOptional()
   @IsString()
   @Length(0, 1000)
@@ -95,7 +107,10 @@ export class MilestoneDto {
   @IsDateString()
   dueDate?: string;
 
-  @ApiProperty({ description: 'List of deliverables for this milestone', type: [String] })
+  @ApiProperty({
+    description: 'List of deliverables for this milestone',
+    type: [String],
+  })
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
@@ -135,13 +150,19 @@ export class CreateContractDto {
 
 // Update Contract DTO
 export class UpdateContractDto {
-  @ApiPropertyOptional({ description: 'Contract terms', type: ContractTermsDto })
+  @ApiPropertyOptional({
+    description: 'Contract terms',
+    type: ContractTermsDto,
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => ContractTermsDto)
   terms?: ContractTermsDto;
 
-  @ApiPropertyOptional({ description: 'Contract milestones', type: [MilestoneDto] })
+  @ApiPropertyOptional({
+    description: 'Contract milestones',
+    type: [MilestoneDto],
+  })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
@@ -173,7 +194,10 @@ export class SubmitMilestoneDto {
 
 // Milestone Review DTO
 export class ReviewMilestoneDto {
-  @ApiProperty({ description: 'Approval status', enum: ['approved', 'rejected'] })
+  @ApiProperty({
+    description: 'Approval status',
+    enum: ['approved', 'rejected'],
+  })
   @IsEnum(['approved', 'rejected'])
   status: 'approved' | 'rejected';
 
@@ -182,7 +206,10 @@ export class ReviewMilestoneDto {
   @Length(1, 1000)
   feedback: string;
 
-  @ApiPropertyOptional({ description: 'Rejection reason if status is rejected', maxLength: 500 })
+  @ApiPropertyOptional({
+    description: 'Rejection reason if status is rejected',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @Length(0, 500)
@@ -191,11 +218,27 @@ export class ReviewMilestoneDto {
 
 // Contract Modification DTO
 export class ContractModificationDto {
-  @ApiProperty({ description: 'Type of modification', enum: ['scope_change', 'timeline_extension', 'budget_increase', 'milestone_addition'] })
-  @IsEnum(['scope_change', 'timeline_extension', 'budget_increase', 'milestone_addition'])
+  @ApiProperty({
+    description: 'Type of modification',
+    enum: [
+      'scope_change',
+      'timeline_extension',
+      'budget_increase',
+      'milestone_addition',
+    ],
+  })
+  @IsEnum([
+    'scope_change',
+    'timeline_extension',
+    'budget_increase',
+    'milestone_addition',
+  ])
   type: string;
 
-  @ApiProperty({ description: 'Description of the modification', maxLength: 1000 })
+  @ApiProperty({
+    description: 'Description of the modification',
+    maxLength: 1000,
+  })
   @IsString()
   @Length(1, 1000)
   description: string;
@@ -210,11 +253,17 @@ export class ContractModificationDto {
 
 // Contract Status Update DTO
 export class UpdateContractStatusDto {
-  @ApiProperty({ description: 'New contract status', enum: ['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'] })
+  @ApiProperty({
+    description: 'New contract status',
+    enum: ['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'],
+  })
   @IsEnum(['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'])
   status: string;
 
-  @ApiPropertyOptional({ description: 'Reason for status change', maxLength: 500 })
+  @ApiPropertyOptional({
+    description: 'Reason for status change',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @Length(0, 500)
@@ -223,7 +272,10 @@ export class UpdateContractStatusDto {
 
 // Contract Search/Filter DTO
 export class SearchContractsDto {
-  @ApiPropertyOptional({ description: 'Filter by status', enum: ['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'] })
+  @ApiPropertyOptional({
+    description: 'Filter by status',
+    enum: ['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'],
+  })
   @IsOptional()
   @IsEnum(['draft', 'active', 'completed', 'cancelled', 'disputed', 'paused'])
   status?: string;
@@ -243,25 +295,41 @@ export class SearchContractsDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Page number for pagination', minimum: 1, default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    minimum: 1,
+    default: 1,
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ description: 'Items per page', minimum: 1, maximum: 100, default: 20 })
+  @ApiPropertyOptional({
+    description: 'Items per page',
+    minimum: 1,
+    maximum: 100,
+    default: 20,
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)
   @Max(100)
   limit?: number = 20;
 
-  @ApiPropertyOptional({ description: 'Sort by field', enum: ['createdAt', 'totalAmount', 'status', 'deadline'] })
+  @ApiPropertyOptional({
+    description: 'Sort by field',
+    enum: ['createdAt', 'totalAmount', 'status', 'deadline'],
+  })
   @IsOptional()
   @IsEnum(['createdAt', 'totalAmount', 'status', 'deadline'])
   sortBy?: string = 'createdAt';
 
-  @ApiPropertyOptional({ description: 'Sort order', enum: ['asc', 'desc'], default: 'desc' })
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: ['asc', 'desc'],
+    default: 'desc',
+  })
   @IsOptional()
   @IsEnum(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc' = 'desc';

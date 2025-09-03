@@ -28,7 +28,9 @@ interface AuthenticatedSocket extends Socket {
   },
   namespace: '/chat',
 })
-export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -48,10 +50,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1];
-      
+      const token =
+        client.handshake.auth?.token ||
+        client.handshake.headers?.authorization?.split(' ')[1];
+
       if (!token) {
-        this.logger.warn(`Client ${client.id} connected without authentication token`);
+        this.logger.warn(
+          `Client ${client.id} connected without authentication token`,
+        );
         client.disconnect();
         return;
       }
@@ -83,9 +89,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       // Send pending notifications
       await this.sendPendingNotifications(client.userId);
-
     } catch (error) {
-      this.logger.error(`Authentication failed for client ${client.id}:`, error.message);
+      this.logger.error(
+        `Authentication failed for client ${client.id}:`,
+        error.message,
+      );
       client.disconnect();
     }
   }
@@ -101,14 +109,17 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         username: client.username,
       });
 
-      this.logger.log(`User ${client.username} (${client.userId}) disconnected`);
+      this.logger.log(
+        `User ${client.username} (${client.userId}) disconnected`,
+      );
     }
   }
 
   @SubscribeMessage('send_message')
   async handleMessage(
     @ConnectedSocket() client: AuthenticatedSocket,
-    @MessageBody() data: {
+    @MessageBody()
+    data: {
       receiverId: string;
       content: string;
       projectId?: string;
@@ -118,7 +129,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       if (!client.userId) {
-        this.logger.warn(`Unauthenticated client ${client.id} attempted to send message`);
+        this.logger.warn(
+          `Unauthenticated client ${client.id} attempted to send message`,
+        );
         client.emit('error', { message: 'Authentication required' });
         return;
       }
@@ -175,8 +188,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         });
       }
 
-      this.logger.log(`Message sent from ${client.userId} to ${data.receiverId}`);
-
+      this.logger.log(
+        `Message sent from ${client.userId} to ${data.receiverId}`,
+      );
     } catch (error) {
       this.logger.error('Error handling message:', error);
       client.emit('error', { message: 'Failed to send message' });
@@ -220,17 +234,18 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     try {
       if (!client.userId) {
-        this.logger.warn(`Unauthenticated client ${client.id} attempted to mark message as read`);
+        this.logger.warn(
+          `Unauthenticated client ${client.id} attempted to mark message as read`,
+        );
         client.emit('error', { message: 'Authentication required' });
         return;
       }
 
       await this.messagingService.markAsRead(client.userId, data.messageId);
-      
+
       client.emit('message_read_confirmed', {
         messageId: data.messageId,
       });
-
     } catch (error) {
       this.logger.error('Error marking message as read:', error);
       client.emit('error', { message: 'Failed to mark message as read' });
@@ -243,7 +258,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody() data: { conversationId: string },
   ) {
     client.join(`conversation_${data.conversationId}`);
-    this.logger.log(`User ${client.userId} joined conversation ${data.conversationId}`);
+    this.logger.log(
+      `User ${client.userId} joined conversation ${data.conversationId}`,
+    );
   }
 
   @SubscribeMessage('leave_conversation')
@@ -252,7 +269,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody() data: { conversationId: string },
   ) {
     client.leave(`conversation_${data.conversationId}`);
-    this.logger.log(`User ${client.userId} left conversation ${data.conversationId}`);
+    this.logger.log(
+      `User ${client.userId} left conversation ${data.conversationId}`,
+    );
   }
 
   @SubscribeMessage('get_online_users')
@@ -283,7 +302,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
-  async broadcastToConversation(conversationId: string, event: string, data: any) {
+  async broadcastToConversation(
+    conversationId: string,
+    event: string,
+    data: any,
+  ) {
     this.server.to(`conversation_${conversationId}`).emit(event, data);
   }
 
@@ -297,9 +320,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   private async sendPendingNotifications(userId: string) {
     try {
-      const unreadCount = await this.notificationsService.getUnreadCount(userId);
+      const unreadCount =
+        await this.notificationsService.getUnreadCount(userId);
       const userSocket = this.userSockets.get(userId);
-      
+
       if (userSocket && unreadCount.unreadCount > 0) {
         userSocket.emit('unread_notifications_count', unreadCount);
       }

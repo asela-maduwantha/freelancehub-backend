@@ -1,17 +1,17 @@
-import { 
-  IsEmail, 
-  IsString, 
-  IsEnum, 
-  IsPhoneNumber, 
-  IsOptional, 
-  Length, 
-  Matches, 
+import {
+  IsEmail,
+  IsString,
+  IsEnum,
+  IsPhoneNumber,
+  IsOptional,
+  Length,
+  Matches,
   IsDateString,
   ValidateNested,
   IsArray,
   ArrayMaxSize,
   IsBoolean,
-  IsObject
+  IsObject,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -44,7 +44,8 @@ export class RegisterUserDto {
   @IsString()
   @Length(3, 50)
   @Matches(/^[a-zA-Z0-9_-]+$/, {
-    message: 'Username can only contain letters, numbers, hyphens, and underscores'
+    message:
+      'Username can only contain letters, numbers, hyphens, and underscores',
   })
   username: string;
 
@@ -72,14 +73,16 @@ export class RegisterUserDto {
   @Type(() => LocationDto)
   location: LocationDto;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'StrongPassword123!',
-    description: 'Password must contain at least 8 characters with uppercase, lowercase, number and special character'
+    description:
+      'Password must contain at least 8 characters with uppercase, lowercase, number and special character',
   })
   @IsString()
   @Length(8, 128)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
-    message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
   })
   password: string;
 }
@@ -101,10 +104,10 @@ export class SendEmailOtpDto {
   @Transform(({ value }) => value.toLowerCase())
   email: string;
 
-  @ApiProperty({ 
-    enum: ['verification', 'password_reset'], 
+  @ApiProperty({
+    enum: ['verification', 'password_reset'],
     example: 'verification',
-    description: 'Type of OTP to send' 
+    description: 'Type of OTP to send',
   })
   @IsEnum(['verification', 'password_reset'])
   type: 'verification' | 'password_reset';
@@ -116,9 +119,9 @@ export class VerifyEmailOtpDto {
   @Transform(({ value }) => value.toLowerCase())
   email: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123456',
-    description: '6-digit OTP code' 
+    description: '6-digit OTP code',
   })
   @IsString()
   @Length(6, 6)
@@ -260,7 +263,8 @@ export class ChangePasswordDto {
   @IsString()
   @Length(8, 128)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
-    message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
   })
   newPassword: string;
 }
@@ -278,9 +282,9 @@ export class ResetPasswordDto {
   @Transform(({ value }) => value.toLowerCase())
   email: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123456',
-    description: '6-digit OTP code' 
+    description: '6-digit OTP code',
   })
   @IsString()
   @Length(6, 6)
@@ -291,7 +295,8 @@ export class ResetPasswordDto {
   @IsString()
   @Length(8, 128)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
-    message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
   })
   newPassword: string;
 }

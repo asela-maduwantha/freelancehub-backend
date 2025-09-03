@@ -23,11 +23,11 @@ import {
 import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../modules/auth/guards/roles.guard';
 import { MessagingService } from './messaging.service';
-import { 
-  CreateMessageDto, 
-  UpdateMessageDto, 
-  CreateConversationDto, 
-  MessageQueryDto 
+import {
+  CreateMessageDto,
+  UpdateMessageDto,
+  CreateConversationDto,
+  MessageQueryDto,
 } from './dto/messaging.dto';
 
 @ApiTags('Messaging')
@@ -38,51 +38,53 @@ export class MessagingController {
   constructor(private readonly messagingService: MessagingService) {}
 
   @Post('messages')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Send a new message',
-    description: 'Send a message to another user, optionally within a project context'
+    description:
+      'Send a message to another user, optionally within a project context',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
-    description: 'Message sent successfully' 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Message sent successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Receiver not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Receiver not found',
   })
   @ApiBody({ type: CreateMessageDto })
   async sendMessage(
     @Request() req,
     @Body() createMessageDto: CreateMessageDto,
   ) {
-    return this.messagingService.createMessage(req.user.userId, createMessageDto);
+    return this.messagingService.createMessage(
+      req.user.userId,
+      createMessageDto,
+    );
   }
 
   @Get('messages')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get messages',
-    description: 'Retrieve messages for the authenticated user with pagination and filtering'
+    description:
+      'Retrieve messages for the authenticated user with pagination and filtering',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Messages retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Messages retrieved successfully',
   })
   @ApiQuery({ type: MessageQueryDto })
-  async getMessages(
-    @Request() req,
-    @Query() query: MessageQueryDto,
-  ) {
+  async getMessages(@Request() req, @Query() query: MessageQueryDto) {
     return this.messagingService.getMessages(req.user.userId, query);
   }
 
   @Get('conversations')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get user conversations',
-    description: 'Retrieve all conversations for the authenticated user'
+    description: 'Retrieve all conversations for the authenticated user',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Conversations retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Conversations retrieved successfully',
   })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
@@ -95,42 +97,45 @@ export class MessagingController {
   }
 
   @Post('conversations')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create a new conversation',
-    description: 'Start a new conversation with specified participants'
+    description: 'Start a new conversation with specified participants',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
-    description: 'Conversation created successfully' 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Conversation created successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Invalid participants or conversation already exists' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid participants or conversation already exists',
   })
   @ApiBody({ type: CreateConversationDto })
   async createConversation(
     @Request() req,
     @Body() createConversationDto: CreateConversationDto,
   ) {
-    return this.messagingService.createConversation(req.user.userId, createConversationDto);
+    return this.messagingService.createConversation(
+      req.user.userId,
+      createConversationDto,
+    );
   }
 
   @Put('messages/:messageId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Edit a message',
-    description: 'Edit your own message content (within 24 hours of sending)'
+    description: 'Edit your own message content (within 24 hours of sending)',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Message updated successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Message updated successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Cannot edit this message' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Cannot edit this message',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Message not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Message not found',
   })
   @ApiParam({ name: 'messageId', description: 'Message ID to edit' })
   @ApiBody({ type: UpdateMessageDto })
@@ -139,50 +144,51 @@ export class MessagingController {
     @Param('messageId') messageId: string,
     @Body() updateMessageDto: UpdateMessageDto,
   ) {
-    return this.messagingService.updateMessage(req.user.userId, messageId, updateMessageDto);
+    return this.messagingService.updateMessage(
+      req.user.userId,
+      messageId,
+      updateMessageDto,
+    );
   }
 
   @Delete('messages/:messageId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Delete a message',
-    description: 'Delete your own message'
+    description: 'Delete your own message',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Message deleted successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Message deleted successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Cannot delete this message' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Cannot delete this message',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Message not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Message not found',
   })
   @ApiParam({ name: 'messageId', description: 'Message ID to delete' })
-  async deleteMessage(
-    @Request() req,
-    @Param('messageId') messageId: string,
-  ) {
+  async deleteMessage(@Request() req, @Param('messageId') messageId: string) {
     return this.messagingService.deleteMessage(req.user.userId, messageId);
   }
 
   @Post('messages/:messageId/read')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Mark message as read',
-    description: 'Mark a received message as read'
+    description: 'Mark a received message as read',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Message marked as read' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Message marked as read',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Cannot mark this message as read' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Cannot mark this message as read',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Message not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Message not found',
   })
   @ApiParam({ name: 'messageId', description: 'Message ID to mark as read' })
   async markMessageAsRead(
@@ -193,76 +199,96 @@ export class MessagingController {
   }
 
   @Post('conversations/:conversationId/read')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Mark conversation as read',
-    description: 'Mark all messages in a conversation as read'
+    description: 'Mark all messages in a conversation as read',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Conversation marked as read' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Conversation marked as read',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Access denied to this conversation' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access denied to this conversation',
   })
-  @ApiParam({ name: 'conversationId', description: 'Conversation ID to mark as read' })
+  @ApiParam({
+    name: 'conversationId',
+    description: 'Conversation ID to mark as read',
+  })
   async markConversationAsRead(
     @Request() req,
     @Param('conversationId') conversationId: string,
   ) {
-    return this.messagingService.markConversationAsRead(req.user.userId, conversationId);
+    return this.messagingService.markConversationAsRead(
+      req.user.userId,
+      conversationId,
+    );
   }
 
   @Post('conversations/:conversationId/archive')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Archive conversation',
-    description: 'Archive a conversation to hide it from active conversations'
+    description: 'Archive a conversation to hide it from active conversations',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Conversation archived successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Conversation archived successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Access denied to this conversation' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access denied to this conversation',
   })
-  @ApiParam({ name: 'conversationId', description: 'Conversation ID to archive' })
+  @ApiParam({
+    name: 'conversationId',
+    description: 'Conversation ID to archive',
+  })
   async archiveConversation(
     @Request() req,
     @Param('conversationId') conversationId: string,
   ) {
-    return this.messagingService.archiveConversation(req.user.userId, conversationId);
+    return this.messagingService.archiveConversation(
+      req.user.userId,
+      conversationId,
+    );
   }
 
   @Get('unread-count')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get unread message count',
-    description: 'Get the total count of unread messages and conversations'
+    description: 'Get the total count of unread messages and conversations',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Unread count retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Unread count retrieved successfully',
   })
   async getUnreadCount(@Request() req) {
     return this.messagingService.getUnreadCount(req.user.userId);
   }
 
   @Get('search')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Search messages',
-    description: 'Search through user messages by content'
+    description: 'Search through user messages by content',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Search results retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Search results retrieved successfully',
   })
   @ApiQuery({ name: 'q', required: true, description: 'Search term' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Maximum results to return' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Maximum results to return',
+  })
   async searchMessages(
     @Request() req,
     @Query('q') searchTerm: string,
     @Query('limit') limit: number = 20,
   ) {
-    return this.messagingService.searchMessages(req.user.userId, searchTerm, limit);
+    return this.messagingService.searchMessages(
+      req.user.userId,
+      searchTerm,
+      limit,
+    );
   }
 }

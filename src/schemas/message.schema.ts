@@ -112,7 +112,10 @@ export class ConversationMetadata {
   @Prop()
   proposalId?: Types.ObjectId;
 
-  @Prop({ enum: ['general', 'project_discussion', 'contract_negotiation', 'support'], default: 'general' })
+  @Prop({
+    enum: ['general', 'project_discussion', 'contract_negotiation', 'support'],
+    default: 'general',
+  })
   type: string;
 
   @Prop({ default: false })
@@ -165,41 +168,41 @@ MessageSchema.index({ receiverId: 1, isRead: 1 });
 MessageSchema.index({ type: 1, createdAt: -1 });
 
 // Indexes for Conversation
-ConversationSchema.index({ 'participants.userId': 1, 'metadata.isArchived': 1 });
+ConversationSchema.index({
+  'participants.userId': 1,
+  'metadata.isArchived': 1,
+});
 ConversationSchema.index({ lastMessageAt: -1 });
 ConversationSchema.index({ 'metadata.projectId': 1 }, { sparse: true });
 ConversationSchema.index({ 'metadata.contractId': 1 }, { sparse: true });
 ConversationSchema.index({ 'metadata.type': 1, lastMessageAt: -1 });
 
 // Virtual for active participants
-ConversationSchema.virtual('activeParticipants').get(function() {
-  return this.participants.filter(p => !p.leftAt);
+ConversationSchema.virtual('activeParticipants').get(function () {
+  return this.participants.filter((p) => !p.leftAt);
 });
 
 // Pre-save middleware to update conversation stats
-MessageSchema.pre('save', async function(next) {
+MessageSchema.pre('save', async function (next) {
   if (this.isNew) {
     try {
       const Conversation = this.db.model('Conversation');
       const now = new Date();
-      await Conversation.findByIdAndUpdate(
-        this.conversationId,
-        {
-          lastMessageId: this._id,
-          lastMessageAt: now,
-          $inc: { messageCount: 1 }
-        }
-      );
+      await Conversation.findByIdAndUpdate(this.conversationId, {
+        lastMessageId: this._id,
+        lastMessageAt: now,
+        $inc: { messageCount: 1 },
+      });
 
       // Update unread count for receiver
       await Conversation.findOneAndUpdate(
         {
           _id: this.conversationId,
-          'participants.userId': this.receiverId
+          'participants.userId': this.receiverId,
         },
         {
-          $inc: { 'participants.$.unreadCount': 1 }
-        }
+          $inc: { 'participants.$.unreadCount': 1 },
+        },
       );
     } catch (error) {
       console.error('Error updating conversation stats:', error);
@@ -209,21 +212,21 @@ MessageSchema.pre('save', async function(next) {
 });
 
 // Pre-save middleware to mark as read
-MessageSchema.pre('save', async function(next) {
+MessageSchema.pre('save', async function (next) {
   if (this.isModified('isRead') && this.isRead && !this.readAt) {
     this.readAt = new Date();
-    
+
     try {
       const Conversation = this.db.model('Conversation');
       await Conversation.findOneAndUpdate(
         {
           _id: this.conversationId,
-          'participants.userId': this.receiverId
+          'participants.userId': this.receiverId,
         },
         {
           $set: { 'participants.$.lastReadAt': this.readAt },
-          $inc: { 'participants.$.unreadCount': -1 }
-        }
+          $inc: { 'participants.$.unreadCount': -1 },
+        },
       );
     } catch (error) {
       console.error('Error updating read status:', error);

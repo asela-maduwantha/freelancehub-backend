@@ -13,7 +13,7 @@ import {
   ArrayMaxSize,
   ValidateNested,
   IsMongoId,
-  IsObject
+  IsObject,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -88,7 +88,10 @@ export class ProposalAttachmentDto {
   @IsString()
   filename: string;
 
-  @ApiProperty({ example: 'https://freelancehub.blob.core.windows.net/freelancehubfiles/Receipt.pdf' })
+  @ApiProperty({
+    example:
+      'https://freelancehub.blob.core.windows.net/freelancehubfiles/Receipt.pdf',
+  })
   @IsString()
   url: string;
 
@@ -212,7 +215,10 @@ export class CreateProjectDto {
   @Transform(({ value }) => value.trim())
   title: string;
 
-  @ApiProperty({ example: 'I need a modern, responsive e-commerce website built with React and Node.js...' })
+  @ApiProperty({
+    example:
+      'I need a modern, responsive e-commerce website built with React and Node.js...',
+  })
   @IsString()
   @Length(100, 5000)
   @Transform(({ value }) => value.trim())
@@ -232,7 +238,11 @@ export class CreateProjectDto {
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(15)
-  @Transform(({ value }) => Array.isArray(value) ? value.filter(skill => skill && skill.length > 0) : [])
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.filter((skill) => skill && skill.length > 0)
+      : [],
+  )
   requiredSkills: string[];
 
   @ApiProperty({ enum: ['fixed', 'hourly'], example: 'fixed' })
@@ -399,7 +409,9 @@ export class SearchProjectsDto {
   @IsEnum(['1d', '3d', '7d', '30d'])
   posted_within?: string;
 
-  @ApiPropertyOptional({ enum: ['newest', 'budget_high', 'budget_low', 'relevance'] })
+  @ApiPropertyOptional({
+    enum: ['newest', 'budget_high', 'budget_low', 'relevance'],
+  })
   @IsOptional()
   @IsEnum(['newest', 'budget_high', 'budget_low', 'relevance'])
   @Transform(({ value }) => value || 'relevance')
@@ -446,7 +458,9 @@ export class InviteFreelancersDto {
 }
 
 export class ProjectStatusDto {
-  @ApiProperty({ enum: ['draft', 'open', 'in_progress', 'completed', 'cancelled'] })
+  @ApiProperty({
+    enum: ['draft', 'open', 'in_progress', 'completed', 'cancelled'],
+  })
   @IsEnum(['draft', 'open', 'in_progress', 'completed', 'cancelled'])
   status: string;
 
@@ -528,7 +542,9 @@ export class ProjectFilterDto {
   @IsEnum(['fixed', 'hourly'])
   projectType?: string;
 
-  @ApiPropertyOptional({ enum: ['open', 'in_progress', 'completed', 'cancelled'] })
+  @ApiPropertyOptional({
+    enum: ['open', 'in_progress', 'completed', 'cancelled'],
+  })
   @IsOptional()
   @IsEnum(['open', 'in_progress', 'completed', 'cancelled'])
   status?: string = 'open';
@@ -548,7 +564,6 @@ export class ProjectFilterDto {
   @IsString()
   search?: string;
 }
-
 
 export class SubmitProposalDto {
   @ApiProperty({ example: 'I am excited to work on your project...' })

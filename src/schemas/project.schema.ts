@@ -94,7 +94,14 @@ export class Project {
   @Prop()
   subcategory?: string;
 
-  @Prop({ type: [String], required: true, validate: [(val: string[]) => val.length > 0, 'At least one skill required'] })
+  @Prop({
+    type: [String],
+    required: true,
+    validate: [
+      (val: string[]) => val.length > 0,
+      'At least one skill required',
+    ],
+  })
   requiredSkills: string[];
 
   @Prop({ enum: ['fixed', 'hourly'], required: true })
@@ -109,7 +116,10 @@ export class Project {
   @Prop({ type: ProjectRequirements })
   requirements?: ProjectRequirements;
 
-  @Prop({ type: [String], validate: [(val: string[]) => val.length <= 10, 'Maximum 10 attachments'] })
+  @Prop({
+    type: [String],
+    validate: [(val: string[]) => val.length <= 10, 'Maximum 10 attachments'],
+  })
   attachments: string[];
 
   @Prop({ enum: ['public', 'private', 'invited'], default: 'public' })
@@ -121,7 +131,17 @@ export class Project {
   @Prop({ type: ProjectProposals, default: {} })
   proposals: ProjectProposals;
 
-  @Prop({ enum: ['draft', 'open', 'in_progress', 'completed', 'cancelled', 'disputed'], default: 'draft' })
+  @Prop({
+    enum: [
+      'draft',
+      'open',
+      'in_progress',
+      'completed',
+      'cancelled',
+      'disputed',
+    ],
+    default: 'draft',
+  })
   status: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
@@ -185,21 +205,25 @@ ProjectSchema.index({ isFeatured: 1, publishedAt: -1 });
 ProjectSchema.index({ isUrgent: 1, publishedAt: -1 });
 
 // Pre-save middleware to generate search text
-ProjectSchema.pre('save', function(next) {
+ProjectSchema.pre('save', function (next) {
   this.searchText = `${this.title} ${this.description} ${this.tags?.join(' ') || ''}`;
   next();
 });
 
 // Pre-save middleware to set publishedAt when status changes to 'open'
-ProjectSchema.pre('save', function(next) {
-  if (this.isModified('status') && this.status === 'open' && !this.publishedAt) {
+ProjectSchema.pre('save', function (next) {
+  if (
+    this.isModified('status') &&
+    this.status === 'open' &&
+    !this.publishedAt
+  ) {
     this.publishedAt = new Date();
   }
   next();
 });
 
 // Virtual for age in days
-ProjectSchema.virtual('ageInDays').get(function() {
+ProjectSchema.virtual('ageInDays').get(function () {
   if (!this.publishedAt) return 0;
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - this.publishedAt.getTime());

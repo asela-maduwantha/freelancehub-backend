@@ -14,42 +14,44 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: new CustomLogger(),
   });
-  
+
   // Get configuration service
   const configService = app.get(ConfigService);
-  
+
   // Setup global error handling
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
-  
+
   // Global prefix
   app.setGlobalPrefix('api');
-  
+
   // API versioning
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: configService.get('apiVersion') || '1',
   });
-  
+
   // Security middleware
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-    crossOriginEmbedderPolicy: false,
-  }));
-  
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
   // Compression
   app.use(compression());
-  
+
   // CORS configuration
   app.enableCors(configService.get('frontend.cors'));
-  
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
@@ -62,12 +64,14 @@ async function bootstrap() {
       },
     }),
   );
-  
+
   // Swagger documentation
   if (configService.get('nodeEnv') !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('FreelanceHub API')
-      .setDescription('Comprehensive freelancer hiring platform API with payments and authentication')
+      .setDescription(
+        'Comprehensive freelancer hiring platform API with payments and authentication',
+      )
       .setVersion('1.0')
       .addBearerAuth(
         {
@@ -87,7 +91,10 @@ async function bootstrap() {
       .addTag('Payments', 'Payment processing and escrow')
       .addTag('Messages', 'Real-time messaging system')
       .addTag('Reviews', 'Review and rating system')
-      .addServer(configService.get('frontend.url') || 'http://localhost:3000', 'Development server')
+      .addServer(
+        configService.get('frontend.url') || 'http://localhost:3000',
+        'Development server',
+      )
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
@@ -100,12 +107,14 @@ async function bootstrap() {
       customSiteTitle: 'FreelanceHub API Documentation',
     });
   }
-  
-  const port =  8000;
+
+  const port = 8000;
 
   await app.listen(port);
-  
-  console.log(`🚀 FreelanceHub backend is running on: http://localhost:${port}`);
+
+  console.log(
+    `🚀 FreelanceHub backend is running on: http://localhost:${port}`,
+  );
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
   console.log(`🛡️ Error handling and logging initialized`);
   console.log(`📝 All errors will be displayed in this terminal`);

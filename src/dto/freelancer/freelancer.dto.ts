@@ -14,7 +14,7 @@ import {
   IsMongoId,
   IsObject,
   IsDateString,
-  Matches
+  Matches,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, ApiResponse } from '@nestjs/swagger';
@@ -38,10 +38,10 @@ export class PaginationDto {
 }
 
 export class EarningsQueryDto {
-  @ApiPropertyOptional({ 
-    enum: ['daily', 'weekly', 'monthly', 'yearly'], 
+  @ApiPropertyOptional({
+    enum: ['daily', 'weekly', 'monthly', 'yearly'],
     example: 'monthly',
-    description: 'Time period for earnings report'
+    description: 'Time period for earnings report',
   })
   @IsOptional()
   @IsEnum(['daily', 'weekly', 'monthly', 'yearly'])
@@ -65,10 +65,10 @@ export class EarningsQueryDto {
 }
 
 export class PaymentHistoryQueryDto extends PaginationDto {
-  @ApiPropertyOptional({ 
-    enum: ['pending', 'completed', 'failed'], 
+  @ApiPropertyOptional({
+    enum: ['pending', 'completed', 'failed'],
     example: 'completed',
-    description: 'Filter by payment status'
+    description: 'Filter by payment status',
   })
   @IsOptional()
   @IsEnum(['pending', 'completed', 'failed'])
@@ -92,9 +92,9 @@ export class PayoutRequestDto {
   @Min(1)
   amount: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'paypal',
-    description: 'Payment method for payout (paypal, bank_transfer, etc.)'
+    description: 'Payment method for payout (paypal, bank_transfer, etc.)',
   })
   @IsString()
   @Length(2, 50)
@@ -108,9 +108,10 @@ export class PayoutRequestDto {
 }
 
 export class FreelancerProfileUpdateDto {
-  @ApiPropertyOptional({ 
-    example: 'Experienced full-stack developer with 5+ years in React and Node.js',
-    description: 'Professional bio'
+  @ApiPropertyOptional({
+    example:
+      'Experienced full-stack developer with 5+ years in React and Node.js',
+    description: 'Professional bio',
   })
   @IsOptional()
   @IsString()
@@ -124,9 +125,9 @@ export class FreelancerProfileUpdateDto {
   @Max(1000)
   hourlyRate?: number;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: ['JavaScript', 'React', 'Node.js', 'MongoDB'],
-    description: 'Array of skills'
+    description: 'Array of skills',
   })
   @IsOptional()
   @IsArray()
@@ -134,34 +135,34 @@ export class FreelancerProfileUpdateDto {
   @ArrayMaxSize(20)
   skills?: string[];
 
-  @ApiPropertyOptional({ 
-    enum: ['available', 'busy', 'unavailable'], 
-    example: 'available'
+  @ApiPropertyOptional({
+    enum: ['available', 'busy', 'unavailable'],
+    example: 'available',
   })
   @IsOptional()
   @IsEnum(['available', 'busy', 'unavailable'])
   availability?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'Senior Full-Stack Developer',
-    description: 'Professional title'
+    description: 'Professional title',
   })
   @IsOptional()
   @IsString()
   @Length(2, 100)
   title?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'senior',
-    enum: ['entry', 'intermediate', 'senior', 'expert']
+    enum: ['entry', 'intermediate', 'senior', 'expert'],
   })
   @IsOptional()
   @IsEnum(['entry', 'intermediate', 'senior', 'expert'])
   experience?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: ['English', 'Spanish'],
-    description: 'Languages spoken'
+    description: 'Languages spoken',
   })
   @IsOptional()
   @IsArray()
@@ -176,7 +177,10 @@ export class FreelancerProfileUpdateDto {
 }
 
 export class PortfolioLinkDto {
-  @ApiProperty({ example: 'github', enum: ['github', 'behance', 'dribbble', 'website', 'demo'] })
+  @ApiProperty({
+    example: 'github',
+    enum: ['github', 'behance', 'dribbble', 'website', 'demo'],
+  })
   @IsString()
   @IsEnum(['github', 'behance', 'dribbble', 'website', 'demo'])
   type: string;
@@ -193,34 +197,34 @@ export class PortfolioLinkDto {
 }
 
 export class PortfolioItemDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'E-commerce Dashboard',
-    description: 'Portfolio item title'
+    description: 'Portfolio item title',
   })
   @IsString()
   @Length(2, 100)
   title: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'A comprehensive dashboard for managing e-commerce operations...',
-    description: 'Detailed description of the project'
+    description: 'Detailed description of the project',
   })
   @IsString()
   @Length(10, 2000)
   description: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: ['React', 'TypeScript', 'Node.js', 'MongoDB'],
-    description: 'Technologies used in the project'
+    description: 'Technologies used in the project',
   })
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(15)
   technologies: string[];
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: ['https://example.com/image1.jpg'],
-    description: 'Array of image URLs'
+    description: 'Array of image URLs',
   })
   @IsOptional()
   @IsArray()
@@ -228,9 +232,9 @@ export class PortfolioItemDto {
   @ArrayMaxSize(10)
   images?: string[];
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     type: [PortfolioLinkDto],
-    description: 'External links for the project'
+    description: 'External links for the project',
   })
   @IsOptional()
   @IsArray()
@@ -244,9 +248,9 @@ export class PortfolioItemDto {
   @IsDateString()
   completedAt?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'client',
-    enum: ['personal', 'client', 'open-source', 'freelance']
+    enum: ['personal', 'client', 'open-source', 'freelance'],
   })
   @IsOptional()
   @IsEnum(['personal', 'client', 'open-source', 'freelance'])
@@ -261,7 +265,7 @@ export class FreelancerStatsDto {
   @ApiProperty({ example: 15 })
   pendingProposals: number;
 
-  @ApiProperty({ example: 12500.50 })
+  @ApiProperty({ example: 12500.5 })
   totalEarnings: number;
 
   @ApiProperty({ example: 89 })
@@ -278,7 +282,10 @@ export class ActivityItemDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011' })
   id: string;
 
-  @ApiProperty({ example: 'proposal', enum: ['proposal', 'contract', 'payment', 'message'] })
+  @ApiProperty({
+    example: 'proposal',
+    enum: ['proposal', 'contract', 'payment', 'message'],
+  })
   type: string;
 
   @ApiProperty({ example: 'Submitted proposal for "Build E-commerce Website"' })
@@ -354,7 +361,7 @@ export class EarningsDataDto {
   @ApiProperty({ type: EarningsPeriodDto })
   _id: EarningsPeriodDto;
 
-  @ApiProperty({ example: 2500.00 })
+  @ApiProperty({ example: 2500.0 })
   totalAmount: number;
 
   @ApiProperty({ example: 3 })
@@ -374,7 +381,7 @@ export class EarningsResponseDto {
   @ApiProperty({ type: [EarningsDataDto] })
   earnings: EarningsDataDto[];
 
-  @ApiProperty({ example: 12500.50 })
+  @ApiProperty({ example: 12500.5 })
   totalEarnings: number;
 
   @ApiProperty({ example: 8 })
@@ -385,7 +392,7 @@ export class PaymentHistoryItemDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011' })
   _id: string;
 
-  @ApiProperty({ example: 1500.00 })
+  @ApiProperty({ example: 1500.0 })
   amount: number;
 
   @ApiProperty({ example: 'completed' })
@@ -429,8 +436,8 @@ export class PayoutResponseDto {
       amount: { type: 'number' },
       paymentMethod: { type: 'string' },
       status: { type: 'string' },
-      requestedAt: { type: 'string', format: 'date-time' }
-    }
+      requestedAt: { type: 'string', format: 'date-time' },
+    },
   })
   payoutRequest: {
     freelancerId: string;
@@ -466,8 +473,8 @@ export class ActiveProjectDto {
       title: { type: 'string' },
       description: { type: 'string' },
       budget: { type: 'object' },
-      deadline: { type: 'string', format: 'date-time' }
-    }
+      deadline: { type: 'string', format: 'date-time' },
+    },
   })
   projectId: {
     _id: string;
@@ -482,8 +489,8 @@ export class ActiveProjectDto {
     properties: {
       _id: { type: 'string' },
       username: { type: 'string' },
-      profile: { type: 'object' }
-    }
+      profile: { type: 'object' },
+    },
   })
   clientId: {
     _id: string;
@@ -517,8 +524,8 @@ export class BookmarkedProjectDto {
     properties: {
       _id: { type: 'string' },
       username: { type: 'string' },
-      profile: { type: 'object' }
-    }
+      profile: { type: 'object' },
+    },
   })
   clientId: {
     _id: string;
@@ -580,12 +587,16 @@ export class DetailedFreelancerStatsDto {
 export class WorkingScheduleDto {
   @ApiProperty({ example: '09:00', description: 'Start time in HH:mm format' })
   @IsString()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Time must be in HH:mm format' })
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'Time must be in HH:mm format',
+  })
   start: string;
 
   @ApiProperty({ example: '17:00', description: 'End time in HH:mm format' })
   @IsString()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Time must be in HH:mm format' })
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'Time must be in HH:mm format',
+  })
   end: string;
 
   @ApiProperty({ example: true, description: 'Whether available on this day' })
@@ -636,37 +647,44 @@ export class WorkingHoursDto {
 }
 
 export class CreateProfessionalProfileDto {
-  @ApiProperty({ example: 'Senior Full-Stack Developer', description: 'Professional title' })
+  @ApiProperty({
+    example: 'Senior Full-Stack Developer',
+    description: 'Professional title',
+  })
   @IsString()
   @Length(2, 100)
   title: string;
 
-  @ApiProperty({ 
-    example: 'Experienced full-stack developer with 5+ years of expertise in React, Node.js, and cloud technologies. Specialized in building scalable web applications and leading development teams.',
-    description: 'Professional description/bio'
+  @ApiProperty({
+    example:
+      'Experienced full-stack developer with 5+ years of expertise in React, Node.js, and cloud technologies. Specialized in building scalable web applications and leading development teams.',
+    description: 'Professional description/bio',
   })
   @IsString()
   @Length(50, 2000)
   description: string;
 
-  @ApiProperty({ 
-    example: 'expert', 
+  @ApiProperty({
+    example: 'expert',
     enum: ['entry', 'intermediate', 'expert'],
-    description: 'Experience level'
+    description: 'Experience level',
   })
   @IsEnum(['entry', 'intermediate', 'expert'])
   experience: string;
 
-  @ApiProperty({ 
-    example: 'available', 
+  @ApiProperty({
+    example: 'available',
     enum: ['available', 'busy', 'unavailable'],
-    description: 'Current availability status'
+    description: 'Current availability status',
   })
   @IsOptional()
   @IsEnum(['available', 'busy', 'unavailable'])
   availability?: string;
 
-  @ApiProperty({ type: WorkingHoursDto, description: 'Working hours and schedule' })
+  @ApiProperty({
+    type: WorkingHoursDto,
+    description: 'Working hours and schedule',
+  })
   @ValidateNested()
   @Type(() => WorkingHoursDto)
   workingHours: WorkingHoursDto;
@@ -679,15 +697,20 @@ export class DetailedSkillDto {
   @Length(1, 50)
   name: string;
 
-  @ApiProperty({ 
-    example: 'advanced', 
+  @ApiProperty({
+    example: 'advanced',
     enum: ['beginner', 'intermediate', 'advanced', 'expert'],
-    description: 'Skill proficiency level'
+    description: 'Skill proficiency level',
   })
   @IsEnum(['beginner', 'intermediate', 'advanced', 'expert'])
   level: string;
 
-  @ApiProperty({ example: 3, minimum: 0, maximum: 50, description: 'Years of experience with this skill' })
+  @ApiProperty({
+    example: 3,
+    minimum: 0,
+    maximum: 50,
+    description: 'Years of experience with this skill',
+  })
   @IsNumber()
   @Min(0)
   @Max(50)
@@ -695,9 +718,9 @@ export class DetailedSkillDto {
 }
 
 export class CreateSkillsProfileDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: ['JavaScript', 'React', 'Node.js'],
-    description: 'Primary skills (most important)'
+    description: 'Primary skills (most important)',
   })
   @IsArray()
   @IsString({ each: true })
@@ -705,9 +728,9 @@ export class CreateSkillsProfileDto {
   @Length(1, 50, { each: true })
   primary: string[];
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: ['Docker', 'AWS', 'MongoDB'],
-    description: 'Secondary skills (additional)'
+    description: 'Secondary skills (additional)',
   })
   @IsOptional()
   @IsArray()
@@ -716,9 +739,9 @@ export class CreateSkillsProfileDto {
   @Length(1, 50, { each: true })
   secondary?: string[];
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: ['Web Development', 'Frontend Development'],
-    description: 'Skill categories'
+    description: 'Skill categories',
   })
   @IsArray()
   @IsString({ each: true })
@@ -726,9 +749,9 @@ export class CreateSkillsProfileDto {
   @Length(1, 50, { each: true })
   categories: string[];
 
-  @ApiProperty({ 
+  @ApiProperty({
     type: [DetailedSkillDto],
-    description: 'Detailed skill information with proficiency levels'
+    description: 'Detailed skill information with proficiency levels',
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -744,19 +767,19 @@ export class CreateLanguageDto {
   @Length(2, 50)
   name: string;
 
-  @ApiProperty({ 
-    example: 'fluent', 
+  @ApiProperty({
+    example: 'fluent',
     enum: ['native', 'fluent', 'conversational', 'basic'],
-    description: 'Language proficiency level'
+    description: 'Language proficiency level',
   })
   @IsEnum(['native', 'fluent', 'conversational', 'basic'])
   proficiency: string;
 }
 
 export class CreateLanguagesProfileDto {
-  @ApiProperty({ 
+  @ApiProperty({
     type: [CreateLanguageDto],
-    description: 'Languages with proficiency levels'
+    description: 'Languages with proficiency levels',
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -767,19 +790,33 @@ export class CreateLanguagesProfileDto {
 
 // Pricing DTOs
 export class HourlyRateDto {
-  @ApiProperty({ example: 25, minimum: 1, maximum: 10000, description: 'Minimum hourly rate' })
+  @ApiProperty({
+    example: 25,
+    minimum: 1,
+    maximum: 10000,
+    description: 'Minimum hourly rate',
+  })
   @IsNumber()
   @Min(1)
   @Max(10000)
   min: number;
 
-  @ApiProperty({ example: 50, minimum: 1, maximum: 10000, description: 'Maximum hourly rate' })
+  @ApiProperty({
+    example: 50,
+    minimum: 1,
+    maximum: 10000,
+    description: 'Maximum hourly rate',
+  })
   @IsNumber()
   @Min(1)
   @Max(10000)
   max: number;
 
-  @ApiProperty({ example: 'USD', enum: ['USD', 'LKR'], description: 'Currency' })
+  @ApiProperty({
+    example: 'USD',
+    enum: ['USD', 'LKR'],
+    description: 'Currency',
+  })
   @IsEnum(['USD', 'LKR'])
   currency: string;
 }
@@ -790,7 +827,10 @@ export class FixedPricePackageDto {
   @Length(2, 100)
   title: string;
 
-  @ApiProperty({ example: 'Simple 5-page website with responsive design', description: 'Package description' })
+  @ApiProperty({
+    example: 'Simple 5-page website with responsive design',
+    description: 'Package description',
+  })
   @IsString()
   @Length(10, 500)
   description: string;
@@ -800,21 +840,31 @@ export class FixedPricePackageDto {
   @Min(1)
   price: number;
 
-  @ApiProperty({ example: 7, minimum: 1, maximum: 365, description: 'Delivery time in days' })
+  @ApiProperty({
+    example: 7,
+    minimum: 1,
+    maximum: 365,
+    description: 'Delivery time in days',
+  })
   @IsNumber()
   @Min(1)
   @Max(365)
   deliveryDays: number;
 
-  @ApiProperty({ example: 2, minimum: 0, maximum: 10, description: 'Number of included revisions' })
+  @ApiProperty({
+    example: 2,
+    minimum: 0,
+    maximum: 10,
+    description: 'Number of included revisions',
+  })
   @IsNumber()
   @Min(0)
   @Max(10)
   revisions: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: ['Responsive Design', 'SEO Optimization', 'Contact Form'],
-    description: 'Package features'
+    description: 'Package features',
   })
   @IsArray()
   @IsString({ each: true })
@@ -823,15 +873,18 @@ export class FixedPricePackageDto {
 }
 
 export class CreatePricingProfileDto {
-  @ApiPropertyOptional({ type: HourlyRateDto, description: 'Hourly rate range' })
+  @ApiPropertyOptional({
+    type: HourlyRateDto,
+    description: 'Hourly rate range',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => HourlyRateDto)
   hourlyRate?: HourlyRateDto;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     type: [FixedPricePackageDto],
-    description: 'Fixed price packages'
+    description: 'Fixed price packages',
   })
   @IsOptional()
   @IsArray()
@@ -843,7 +896,10 @@ export class CreatePricingProfileDto {
 
 // Education DTOs
 export class CreateEducationDto {
-  @ApiProperty({ example: 'University of Colombo', description: 'Institution name' })
+  @ApiProperty({
+    example: 'University of Colombo',
+    description: 'Institution name',
+  })
   @IsString()
   @Length(2, 100)
   institution: string;
@@ -853,26 +909,42 @@ export class CreateEducationDto {
   @Length(2, 100)
   degree: string;
 
-  @ApiPropertyOptional({ example: 'Computer Science', description: 'Field of study' })
+  @ApiPropertyOptional({
+    example: 'Computer Science',
+    description: 'Field of study',
+  })
   @IsOptional()
   @IsString()
   @Length(2, 100)
   fieldOfStudy?: string;
 
-  @ApiProperty({ example: 2018, minimum: 1950, maximum: 2030, description: 'Start year' })
+  @ApiProperty({
+    example: 2018,
+    minimum: 1950,
+    maximum: 2030,
+    description: 'Start year',
+  })
   @IsNumber()
   @Min(1950)
   @Max(2030)
   startYear: number;
 
-  @ApiPropertyOptional({ example: 2022, minimum: 1950, maximum: 2030, description: 'End year' })
+  @ApiPropertyOptional({
+    example: 2022,
+    minimum: 1950,
+    maximum: 2030,
+    description: 'End year',
+  })
   @IsOptional()
   @IsNumber()
   @Min(1950)
   @Max(2030)
   endYear?: number;
 
-  @ApiPropertyOptional({ example: 'Graduated with First Class Honors', description: 'Additional description' })
+  @ApiPropertyOptional({
+    example: 'Graduated with First Class Honors',
+    description: 'Additional description',
+  })
   @IsOptional()
   @IsString()
   @Length(0, 500)
@@ -885,23 +957,35 @@ export class CreateEducationDto {
 
 // Certification DTOs
 export class CreateCertificationDto {
-  @ApiProperty({ example: 'AWS Certified Solutions Architect', description: 'Certification name' })
+  @ApiProperty({
+    example: 'AWS Certified Solutions Architect',
+    description: 'Certification name',
+  })
   @IsString()
   @Length(2, 100)
   name: string;
 
-  @ApiProperty({ example: 'Amazon Web Services', description: 'Issuing organization' })
+  @ApiProperty({
+    example: 'Amazon Web Services',
+    description: 'Issuing organization',
+  })
   @IsString()
   @Length(2, 100)
   issuingOrganization: string;
 
-  @ApiPropertyOptional({ example: 'AWS-SAA-12345', description: 'Credential ID' })
+  @ApiPropertyOptional({
+    example: 'AWS-SAA-12345',
+    description: 'Credential ID',
+  })
   @IsOptional()
   @IsString()
   @Length(1, 100)
   credentialId?: string;
 
-  @ApiPropertyOptional({ example: 'https://aws.amazon.com/verification', description: 'Credential verification URL' })
+  @ApiPropertyOptional({
+    example: 'https://aws.amazon.com/verification',
+    description: 'Credential verification URL',
+  })
   @IsOptional()
   @IsUrl()
   credentialUrl?: string;
@@ -910,12 +994,18 @@ export class CreateCertificationDto {
   @IsDateString()
   issueDate: string;
 
-  @ApiPropertyOptional({ example: '2026-01-15', description: 'Expiration date' })
+  @ApiPropertyOptional({
+    example: '2026-01-15',
+    description: 'Expiration date',
+  })
   @IsOptional()
   @IsDateString()
   expirationDate?: string;
 
-  @ApiPropertyOptional({ example: 'Professional level certification', description: 'Additional description' })
+  @ApiPropertyOptional({
+    example: 'Professional level certification',
+    description: 'Additional description',
+  })
   @IsOptional()
   @IsString()
   @Length(0, 500)
@@ -924,51 +1014,81 @@ export class CreateCertificationDto {
 
 // Visibility Settings DTOs
 export class UpdateVisibilityDto {
-  @ApiProperty({ example: true, description: 'Whether profile appears in search results' })
+  @ApiProperty({
+    example: true,
+    description: 'Whether profile appears in search results',
+  })
   @IsBoolean()
   searchable: boolean;
 
-  @ApiProperty({ example: true, description: 'Whether to show in client recommendations' })
+  @ApiProperty({
+    example: true,
+    description: 'Whether to show in client recommendations',
+  })
   @IsBoolean()
   showInRecommendations: boolean;
 
-  @ApiProperty({ example: true, description: 'Whether to show portfolio publicly' })
+  @ApiProperty({
+    example: true,
+    description: 'Whether to show portfolio publicly',
+  })
   @IsBoolean()
   showPortfolio: boolean;
 
-  @ApiProperty({ example: true, description: 'Whether to show pricing information' })
+  @ApiProperty({
+    example: true,
+    description: 'Whether to show pricing information',
+  })
   @IsBoolean()
   showRates: boolean;
 
-  @ApiProperty({ example: true, description: 'Whether to show contact information' })
+  @ApiProperty({
+    example: true,
+    description: 'Whether to show contact information',
+  })
   @IsBoolean()
   showContactInfo: boolean;
 }
 
 // Complete Profile Creation DTO
 export class CreateCompleteFreelancerProfileDto {
-  @ApiProperty({ type: CreateProfessionalProfileDto, description: 'Professional information' })
+  @ApiProperty({
+    type: CreateProfessionalProfileDto,
+    description: 'Professional information',
+  })
   @ValidateNested()
   @Type(() => CreateProfessionalProfileDto)
   professional: CreateProfessionalProfileDto;
 
-  @ApiProperty({ type: CreateSkillsProfileDto, description: 'Skills information' })
+  @ApiProperty({
+    type: CreateSkillsProfileDto,
+    description: 'Skills information',
+  })
   @ValidateNested()
   @Type(() => CreateSkillsProfileDto)
   skills: CreateSkillsProfileDto;
 
-  @ApiProperty({ type: CreateLanguagesProfileDto, description: 'Languages information' })
+  @ApiProperty({
+    type: CreateLanguagesProfileDto,
+    description: 'Languages information',
+  })
   @ValidateNested()
   @Type(() => CreateLanguagesProfileDto)
   languages: CreateLanguagesProfileDto;
 
-  @ApiPropertyOptional({ type: CreatePricingProfileDto, description: 'Pricing information' })
+  @ApiPropertyOptional({
+    type: CreatePricingProfileDto,
+    description: 'Pricing information',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => CreatePricingProfileDto)
   pricing?: CreatePricingProfileDto;
 
-  @ApiPropertyOptional({ type: UpdateVisibilityDto, description: 'Visibility settings' })
+  @ApiPropertyOptional({
+    type: UpdateVisibilityDto,
+    description: 'Visibility settings',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => UpdateVisibilityDto)
@@ -977,10 +1097,15 @@ export class CreateCompleteFreelancerProfileDto {
 
 // Response DTOs
 export class FreelancerProfileCompletionDto {
-  @ApiProperty({ example: 75, minimum: 0, maximum: 100, description: 'Profile completion percentage' })
+  @ApiProperty({
+    example: 75,
+    minimum: 0,
+    maximum: 100,
+    description: 'Profile completion percentage',
+  })
   completionPercentage: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: {
       professional: true,
       skills: true,
@@ -988,9 +1113,9 @@ export class FreelancerProfileCompletionDto {
       pricing: false,
       portfolio: false,
       education: false,
-      certifications: false
+      certifications: false,
     },
-    description: 'Section completion status'
+    description: 'Section completion status',
   })
   sectionsCompleted: {
     professional: boolean;
@@ -1002,53 +1127,91 @@ export class FreelancerProfileCompletionDto {
     certifications: boolean;
   };
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: ['Add pricing information', 'Upload portfolio items'],
-    description: 'Suggestions for improving profile'
+    description: 'Suggestions for improving profile',
   })
   suggestions: string[];
 }
 
 export class CompleteFreelancerProfileResponseDto {
-  @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Profile ID' })
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439011',
+    description: 'Profile ID',
+  })
   id: string;
 
   @ApiProperty({ example: '507f1f77bcf86cd799439012', description: 'User ID' })
   userId: string;
 
-  @ApiProperty({ type: CreateProfessionalProfileDto, description: 'Professional information' })
+  @ApiProperty({
+    type: CreateProfessionalProfileDto,
+    description: 'Professional information',
+  })
   professional: any;
 
-  @ApiProperty({ type: CreateSkillsProfileDto, description: 'Skills information' })
+  @ApiProperty({
+    type: CreateSkillsProfileDto,
+    description: 'Skills information',
+  })
   skills: any;
 
-  @ApiProperty({ type: CreateLanguagesProfileDto, description: 'Languages information' })
+  @ApiProperty({
+    type: CreateLanguagesProfileDto,
+    description: 'Languages information',
+  })
   languages: any;
 
-  @ApiPropertyOptional({ type: CreatePricingProfileDto, description: 'Pricing information' })
+  @ApiPropertyOptional({
+    type: CreatePricingProfileDto,
+    description: 'Pricing information',
+  })
   pricing?: any;
 
-  @ApiProperty({ type: [PortfolioItemResponseDto], description: 'Portfolio items' })
+  @ApiProperty({
+    type: [PortfolioItemResponseDto],
+    description: 'Portfolio items',
+  })
   portfolio: PortfolioItemResponseDto[];
 
-  @ApiPropertyOptional({ type: [CreateEducationDto], description: 'Education history' })
+  @ApiPropertyOptional({
+    type: [CreateEducationDto],
+    description: 'Education history',
+  })
   education?: any[];
 
-  @ApiPropertyOptional({ type: [CreateCertificationDto], description: 'Certifications' })
+  @ApiPropertyOptional({
+    type: [CreateCertificationDto],
+    description: 'Certifications',
+  })
   certifications?: any[];
 
-  @ApiProperty({ type: UpdateVisibilityDto, description: 'Visibility settings' })
+  @ApiProperty({
+    type: UpdateVisibilityDto,
+    description: 'Visibility settings',
+  })
   visibility: any;
 
-  @ApiProperty({ example: 75, minimum: 0, maximum: 100, description: 'Profile completion percentage' })
+  @ApiProperty({
+    example: 75,
+    minimum: 0,
+    maximum: 100,
+    description: 'Profile completion percentage',
+  })
   completionPercentage: number;
 
   @ApiProperty({ example: true, description: 'Whether profile is active' })
   isActive: boolean;
 
-  @ApiProperty({ example: '2024-01-15T10:30:00.000Z', description: 'Profile creation date' })
+  @ApiProperty({
+    example: '2024-01-15T10:30:00.000Z',
+    description: 'Profile creation date',
+  })
   createdAt: Date;
 
-  @ApiProperty({ example: '2024-01-16T12:45:00.000Z', description: 'Profile last updated' })
+  @ApiProperty({
+    example: '2024-01-16T12:45:00.000Z',
+    description: 'Profile last updated',
+  })
   updatedAt: Date;
 }

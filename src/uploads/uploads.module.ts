@@ -14,10 +14,10 @@ import * as fs from 'fs';
       { name: FileUpload.name, schema: FileUploadSchema },
     ]),
     MulterModule.register({
-      storage: undefined, 
+      storage: undefined,
       limits: {
-        fileSize: 10 * 1024 * 1024, 
-        files: 10, 
+        fileSize: 10 * 1024 * 1024,
+        files: 10,
       },
     }),
   ],

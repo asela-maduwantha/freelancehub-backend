@@ -15,17 +15,16 @@ export class Profile {
   @Prop({ validate: /^https?:\/\// })
   avatar?: string;
 
-  @Prop({ 
+  @Prop({
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         return !v || /^\+[1-9]\d{1,14}$/.test(v);
       },
-      message: 'Phone number must be in valid international format (e.g., +1234567890)'
-    }
+      message:
+        'Phone number must be in valid international format (e.g., +1234567890)',
+    },
   })
   phone?: string;
-
-
 }
 
 @Schema({ _id: false })
@@ -130,9 +129,9 @@ export class UserPreferences {
     type: {
       email: { type: Boolean, default: true },
       sms: { type: Boolean, default: false },
-      push: { type: Boolean, default: true }
+      push: { type: Boolean, default: true },
     },
-    default: {}
+    default: {},
   })
   notifications: {
     email: boolean;
@@ -277,12 +276,12 @@ export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ status: 1, createdAt: -1 });
 
 // Virtual for full name
-UserSchema.virtual('profile.fullName').get(function() {
+UserSchema.virtual('profile.fullName').get(function () {
   return `${this.profile.firstName} ${this.profile.lastName}`;
 });
 
 // Pre-save middleware for email normalization
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
   if (this.isModified('email')) {
     this.email = this.email.toLowerCase();
   }

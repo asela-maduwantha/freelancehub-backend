@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Model, Types } from 'mongoose';
@@ -23,7 +28,9 @@ export class PaymentsService {
         apiVersion: '2025-02-24.acacia',
       });
     } else {
-      console.warn('Stripe secret key not configured. Payment functionality will be disabled.');
+      console.warn(
+        'Stripe secret key not configured. Payment functionality will be disabled.',
+      );
     }
   }
 
@@ -45,7 +52,9 @@ export class PaymentsService {
     }
 
     if (contract.clientId.toString() !== userId) {
-      throw new ForbiddenException('You can only make payments for your own contracts');
+      throw new ForbiddenException(
+        'You can only make payments for your own contracts',
+      );
     }
 
     if (contract.status !== 'active') {
@@ -63,7 +72,9 @@ export class PaymentsService {
         },
         application_fee_amount: Math.round(amount * 0.05 * 100), // 5% platform fee
         transfer_data: {
-          destination: await this.getFreelancerStripeAccount(contract.freelancerId.toString()),
+          destination: await this.getFreelancerStripeAccount(
+            contract.freelancerId.toString(),
+          ),
         },
       });
 
@@ -72,8 +83,8 @@ export class PaymentsService {
         contractId: new Types.ObjectId(contractId),
         amount: amount,
         platformFee: amount * 0.05,
-        stripeFee: amount * 0.029 + 0.30, // Stripe fees
-        freelancerAmount: amount * 0.95 - (amount * 0.029 + 0.30),
+        stripeFee: amount * 0.029 + 0.3, // Stripe fees
+        freelancerAmount: amount * 0.95 - (amount * 0.029 + 0.3),
         currency: 'USD',
         stripePaymentIntentId: paymentIntent.id,
         status: 'pending',
@@ -98,18 +109,19 @@ export class PaymentsService {
       throw new BadRequestException('Payment processing is not configured');
     }
     try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+      const paymentIntent =
+        await this.stripe.paymentIntents.retrieve(paymentIntentId);
 
       if (paymentIntent.status === 'succeeded') {
-      // Update payment record
-      await this.paymentModel.findOneAndUpdate(
-        { stripePaymentIntentId: paymentIntentId },
-        {
-          status: 'succeeded',
-          processedAt: new Date(),
-          stripeChargeId: paymentIntent.latest_charge as string,
-        },
-      );        // Update contract with payment info
+        // Update payment record
+        await this.paymentModel.findOneAndUpdate(
+          { stripePaymentIntentId: paymentIntentId },
+          {
+            status: 'succeeded',
+            processedAt: new Date(),
+            stripeChargeId: paymentIntent.latest_charge as string,
+          },
+        ); // Update contract with payment info
         const contractId = paymentIntent.metadata.contractId;
         await this.contractModel.findByIdAndUpdate(contractId, {
           $inc: { 'financials.totalPaid': paymentIntent.amount / 100 },
@@ -148,7 +160,9 @@ export class PaymentsService {
     }
 
     if (contract.clientId.toString() !== userId) {
-      throw new ForbiddenException('You can only create escrow payments for your own contracts');
+      throw new ForbiddenException(
+        'You can only create escrow payments for your own contracts',
+      );
     }
 
     try {
@@ -169,8 +183,8 @@ export class PaymentsService {
         contractId: new Types.ObjectId(contractId),
         amount: amount,
         platformFee: amount * 0.05,
-        stripeFee: amount * 0.029 + 0.30,
-        freelancerAmount: amount * 0.95 - (amount * 0.029 + 0.30),
+        stripeFee: amount * 0.029 + 0.3,
+        freelancerAmount: amount * 0.95 - (amount * 0.029 + 0.3),
         currency: 'USD',
         stripePaymentIntentId: paymentIntent.id,
         status: 'pending',
@@ -188,8 +202,13 @@ export class PaymentsService {
     }
   }
 
-  async releaseEscrowPayment(paymentId: string, userId: string): Promise<{ success: boolean }> {
-    const payment = await this.paymentModel.findById(paymentId).populate('contractId');
+  async releaseEscrowPayment(
+    paymentId: string,
+    userId: string,
+  ): Promise<{ success: boolean }> {
+    const payment = await this.paymentModel
+      .findById(paymentId)
+      .populate('contractId');
 
     if (!payment) {
       throw new NotFoundException('Payment not found');
@@ -197,7 +216,9 @@ export class PaymentsService {
 
     const contract = payment.contractId as any;
     if (contract.clientId.toString() !== userId) {
-      throw new ForbiddenException('You can only release your own escrow payments');
+      throw new ForbiddenException(
+        'You can only release your own escrow payments',
+      );
     }
 
     if (payment.status !== 'pending') {
@@ -209,8 +230,10 @@ export class PaymentsService {
       await this.stripe.paymentIntents.capture(payment.stripePaymentIntentId);
 
       // Transfer to freelancer
-      const freelancerAccount = await this.getFreelancerStripeAccount(contract.freelancerId.toString());
-      
+      const freelancerAccount = await this.getFreelancerStripeAccount(
+        contract.freelancerId.toString(),
+      );
+
       await this.stripe.transfers.create({
         amount: Math.round(payment.freelancerAmount * 100),
         currency: 'usd',
@@ -234,8 +257,14 @@ export class PaymentsService {
     }
   }
 
-  async refundPayment(paymentId: string, reason: string, userId: string): Promise<{ success: boolean }> {
-    const payment = await this.paymentModel.findById(paymentId).populate('contractId');
+  async refundPayment(
+    paymentId: string,
+    reason: string,
+    userId: string,
+  ): Promise<{ success: boolean }> {
+    const payment = await this.paymentModel
+      .findById(paymentId)
+      .populate('contractId');
 
     if (!payment) {
       throw new NotFoundException('Payment not found');
@@ -252,7 +281,7 @@ export class PaymentsService {
 
     try {
       let refund;
-      
+
       if (payment.stripeChargeId) {
         // Refund completed payment
         refund = await this.stripe.refunds.create({
@@ -283,7 +312,10 @@ export class PaymentsService {
     }
   }
 
-  async getPaymentHistory(contractId: string, userId: string): Promise<Payment[]> {
+  async getPaymentHistory(
+    contractId: string,
+    userId: string,
+  ): Promise<Payment[]> {
     const contract = await this.contractModel.findById(contractId);
 
     if (!contract) {
@@ -291,54 +323,80 @@ export class PaymentsService {
     }
 
     // Allow both client and freelancer to view payment history
-    if (contract.clientId.toString() !== userId && contract.freelancerId.toString() !== userId) {
-      throw new ForbiddenException('You can only view payment history for your own contracts');
+    if (
+      contract.clientId.toString() !== userId &&
+      contract.freelancerId.toString() !== userId
+    ) {
+      throw new ForbiddenException(
+        'You can only view payment history for your own contracts',
+      );
     }
 
     return this.paymentModel
       .find({ contractId: new Types.ObjectId(contractId) })
       .populate('contractId', 'terms.projectTitle clientId freelancerId')
-      .populate('initiatedBy', 'username email profile.firstName profile.lastName')
+      .populate(
+        'initiatedBy',
+        'username email profile.firstName profile.lastName',
+      )
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async getUserPayments(userId: string, role: 'client' | 'freelancer'): Promise<Payment[]> {
+  async getUserPayments(
+    userId: string,
+    role: 'client' | 'freelancer',
+  ): Promise<Payment[]> {
     // Get contracts for the user
-    const contractQuery = role === 'client' 
-      ? { clientId: new Types.ObjectId(userId) }
-      : { freelancerId: new Types.ObjectId(userId) };
+    const contractQuery =
+      role === 'client'
+        ? { clientId: new Types.ObjectId(userId) }
+        : { freelancerId: new Types.ObjectId(userId) };
 
-    const contracts = await this.contractModel.find(contractQuery).select('_id');
-    const contractIds = contracts.map(c => c._id);
+    const contracts = await this.contractModel
+      .find(contractQuery)
+      .select('_id');
+    const contractIds = contracts.map((c) => c._id);
 
     return this.paymentModel
       .find({ contractId: { $in: contractIds } })
       .populate('contractId', 'terms.projectTitle clientId freelancerId')
-      .populate('initiatedBy', 'username email profile.firstName profile.lastName')
+      .populate(
+        'initiatedBy',
+        'username email profile.firstName profile.lastName',
+      )
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async handleStripeWebhook(signature: string, payload: Buffer): Promise<{ received: boolean }> {
-    const webhookSecret = this.configService.get<string>('stripe.webhookSecret');
-    
+  async handleStripeWebhook(
+    signature: string,
+    payload: Buffer,
+  ): Promise<{ received: boolean }> {
+    const webhookSecret = this.configService.get<string>(
+      'stripe.webhookSecret',
+    );
+
     if (!webhookSecret) {
       throw new BadRequestException('Webhook secret not configured');
     }
 
     try {
-      const event = this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+      const event = this.stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        webhookSecret,
+      );
 
       switch (event.type) {
         case 'payment_intent.succeeded':
-          await this.handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent);
+          await this.handlePaymentSucceeded(event.data.object);
           break;
         case 'payment_intent.payment_failed':
-          await this.handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
+          await this.handlePaymentFailed(event.data.object);
           break;
         case 'transfer.created':
-          await this.handleTransferCreated(event.data.object as Stripe.Transfer);
+          await this.handleTransferCreated(event.data.object);
           break;
         default:
           console.log(`Unhandled event type: ${event.type}`);
@@ -351,7 +409,9 @@ export class PaymentsService {
     }
   }
 
-  private async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  private async handlePaymentSucceeded(
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<void> {
     await this.paymentModel.findOneAndUpdate(
       { stripePaymentIntentId: paymentIntent.id },
       {
@@ -362,7 +422,9 @@ export class PaymentsService {
     );
   }
 
-  private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  private async handlePaymentFailed(
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<void> {
     await this.paymentModel.findOneAndUpdate(
       { stripePaymentIntentId: paymentIntent.id },
       {
@@ -373,7 +435,9 @@ export class PaymentsService {
     );
   }
 
-  private async handleTransferCreated(transfer: Stripe.Transfer): Promise<void> {
+  private async handleTransferCreated(
+    transfer: Stripe.Transfer,
+  ): Promise<void> {
     if (transfer.metadata?.paymentId) {
       await this.paymentModel.findByIdAndUpdate(transfer.metadata.paymentId, {
         stripeTransferId: transfer.id,
@@ -382,25 +446,33 @@ export class PaymentsService {
     }
   }
 
-  private async getFreelancerStripeAccount(freelancerId: string): Promise<string> {
+  private async getFreelancerStripeAccount(
+    freelancerId: string,
+  ): Promise<string> {
     const freelancer = await this.userModel.findById(freelancerId);
-    
+
     if (!freelancer?.stripeConnectedAccountId) {
-      throw new BadRequestException('Freelancer must set up Stripe account first');
+      throw new BadRequestException(
+        'Freelancer must set up Stripe account first',
+      );
     }
 
     return freelancer.stripeConnectedAccountId;
   }
 
-  async createConnectedAccount(userId: string): Promise<{ accountLink: string }> {
+  async createConnectedAccount(
+    userId: string,
+  ): Promise<{ accountLink: string }> {
     const user = await this.userModel.findById(userId);
-    
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     if (!user.role.includes('freelancer')) {
-      throw new ForbiddenException('Only freelancers can create connected accounts');
+      throw new ForbiddenException(
+        'Only freelancers can create connected accounts',
+      );
     }
 
     try {
@@ -439,14 +511,16 @@ export class PaymentsService {
 
   async getAccountStatus(userId: string): Promise<any> {
     const user = await this.userModel.findById(userId);
-    
+
     if (!user?.stripeConnectedAccountId) {
       return { connected: false, requirements: [] };
     }
 
     try {
-      const account = await this.stripe.accounts.retrieve(user.stripeConnectedAccountId);
-      
+      const account = await this.stripe.accounts.retrieve(
+        user.stripeConnectedAccountId,
+      );
+
       return {
         connected: account.charges_enabled && account.payouts_enabled,
         requirements: account.requirements?.currently_due || [],

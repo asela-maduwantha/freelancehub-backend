@@ -21,10 +21,10 @@ export class Review extends Document {
   @Prop({ required: true, minlength: 10, maxlength: 2000 })
   comment: string;
 
-  @Prop({ 
-    type: String, 
-    enum: ['client_to_freelancer', 'freelancer_to_client'], 
-    required: true 
+  @Prop({
+    type: String,
+    enum: ['client_to_freelancer', 'freelancer_to_client'],
+    required: true,
   })
   reviewType: string;
 
@@ -71,10 +71,10 @@ export class Review extends Document {
     createdAt: Date;
   }>;
 
-  @Prop({ 
-    type: String, 
-    enum: ['active', 'hidden', 'under_review', 'removed'], 
-    default: 'active' 
+  @Prop({
+    type: String,
+    enum: ['active', 'hidden', 'under_review', 'removed'],
+    default: 'active',
   })
   status: string;
 

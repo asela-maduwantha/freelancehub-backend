@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { FileUpload, FileUploadDocument } from '../schemas/file-upload.schema';
@@ -15,17 +20,20 @@ export class UploadsService {
   private blobUrl: string;
 
   constructor(
-    @InjectModel(FileUpload.name) private fileUploadModel: Model<FileUploadDocument>,
+    @InjectModel(FileUpload.name)
+    private fileUploadModel: Model<FileUploadDocument>,
     private configService: ConfigService,
   ) {
-  const accountName = this.configService.get<string>('azure.accountName');
-  const accountKey = this.configService.get<string>('azure.accountKey');
-  const containerName = this.configService.get<string>('azure.containerName') ?? '';
-  const blobUrl = this.configService.get<string>('azure.blobUrl') ?? '';
-  const connStr = `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=${accountKey};EndpointSuffix=core.windows.net`;
-  this.blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
-  this.containerClient = this.blobServiceClient.getContainerClient(containerName);
-  this.blobUrl = blobUrl;
+    const accountName = this.configService.get<string>('azure.accountName');
+    const accountKey = this.configService.get<string>('azure.accountKey');
+    const containerName =
+      this.configService.get<string>('azure.containerName') ?? '';
+    const blobUrl = this.configService.get<string>('azure.blobUrl') ?? '';
+    const connStr = `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=${accountKey};EndpointSuffix=core.windows.net`;
+    this.blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
+    this.containerClient =
+      this.blobServiceClient.getContainerClient(containerName);
+    this.blobUrl = blobUrl;
   }
 
   async uploadFile(
@@ -47,7 +55,7 @@ export class UploadsService {
       const blockBlobClient = this.containerClient.getBlockBlobClient(blobName);
 
       await blockBlobClient.uploadData(file.buffer, {
-        blobHTTPHeaders: { blobContentType: file.mimetype }
+        blobHTTPHeaders: { blobContentType: file.mimetype },
       });
 
       const fileUpload = new this.fileUploadModel({
@@ -58,13 +66,17 @@ export class UploadsService {
         path: blobName,
         uploadedBy: new Types.ObjectId(userId),
         category: uploadDto.category,
-        relatedTo: uploadDto.relatedTo ? new Types.ObjectId(uploadDto.relatedTo) : undefined,
+        relatedTo: uploadDto.relatedTo
+          ? new Types.ObjectId(uploadDto.relatedTo)
+          : undefined,
         onModel: uploadDto.onModel,
         url: `${this.blobUrl}/${blobName}`,
       });
 
       const savedFile = await fileUpload.save();
-      this.logger.log(`File uploaded to Azure: ${file.originalname} by user ${userId}`);
+      this.logger.log(
+        `File uploaded to Azure: ${file.originalname} by user ${userId}`,
+      );
       return savedFile;
     } catch (error) {
       // Clean up uploaded file if database save fails
@@ -81,13 +93,16 @@ export class UploadsService {
     userId: string,
   ): Promise<FileUploadDocument[]> {
     const uploadedFiles: FileUploadDocument[] = [];
-    
+
     for (const file of files) {
       try {
         const uploadedFile = await this.uploadFile(file, uploadDto, userId);
         uploadedFiles.push(uploadedFile);
       } catch (error) {
-        this.logger.error(`Failed to upload file ${file.originalname}:`, error.message);
+        this.logger.error(
+          `Failed to upload file ${file.originalname}:`,
+          error.message,
+        );
         // Continue with other files
       }
     }
@@ -95,8 +110,14 @@ export class UploadsService {
     return uploadedFiles;
   }
 
-  async getFiles(userId: string, filters: FileFilterDto = {}): Promise<FileUploadDocument[]> {
-    const query: any = { uploadedBy: new Types.ObjectId(userId), isActive: true };
+  async getFiles(
+    userId: string,
+    filters: FileFilterDto = {},
+  ): Promise<FileUploadDocument[]> {
+    const query: any = {
+      uploadedBy: new Types.ObjectId(userId),
+      isActive: true,
+    };
 
     if (filters.category) {
       query.category = filters.category;
@@ -117,12 +138,15 @@ export class UploadsService {
       .exec();
   }
 
-  async getFileById(fileId: string, userId: string): Promise<FileUploadDocument> {
+  async getFileById(
+    fileId: string,
+    userId: string,
+  ): Promise<FileUploadDocument> {
     const file = await this.fileUploadModel
-      .findOne({ 
-        _id: new Types.ObjectId(fileId), 
+      .findOne({
+        _id: new Types.ObjectId(fileId),
         uploadedBy: new Types.ObjectId(userId),
-        isActive: true 
+        isActive: true,
       })
       .populate('uploadedBy', 'username email')
       .exec();
@@ -143,13 +167,20 @@ export class UploadsService {
 
     // Delete from Azure Blob Storage
     try {
-      const blockBlobClient = this.containerClient.getBlockBlobClient(file.filename);
+      const blockBlobClient = this.containerClient.getBlockBlobClient(
+        file.filename,
+      );
       await blockBlobClient.deleteIfExists();
     } catch (error) {
-      this.logger.warn(`Failed to delete blob ${file.filename}:`, error.message);
+      this.logger.warn(
+        `Failed to delete blob ${file.filename}:`,
+        error.message,
+      );
     }
 
-    this.logger.log(`File deleted from Azure: ${file.originalName} by user ${userId}`);
+    this.logger.log(
+      `File deleted from Azure: ${file.originalName} by user ${userId}`,
+    );
   }
 
   async getFilesByProject(projectId: string): Promise<FileUploadDocument[]> {
@@ -180,25 +211,36 @@ export class UploadsService {
     const allowedTypes = {
       avatar: ['image/jpeg', 'image/png', 'image/gif'],
       project_attachment: [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf', 'application/msword', 
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/pdf',
+        'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain', 'text/csv'
+        'text/plain',
+        'text/csv',
       ],
       message_attachment: [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf', 'application/msword',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/pdf',
+        'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'text/plain',
       ],
       document: [
-        'application/pdf', 'application/msword',
+        'application/pdf',
+        'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain', 'text/csv'
+        'text/plain',
+        'text/csv',
       ],
     };
 

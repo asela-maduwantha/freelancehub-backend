@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsEnum, IsArray, ValidateNested, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+  IsMongoId,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -28,23 +35,25 @@ export class CreateMessageDto {
   @IsString()
   content: string;
 
-  @ApiPropertyOptional({ description: 'Project ID if message is related to a project' })
+  @ApiPropertyOptional({
+    description: 'Project ID if message is related to a project',
+  })
   @IsOptional()
   @IsMongoId()
   projectId?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Type of message',
     enum: ['text', 'file', 'image', 'proposal', 'contract'],
-    default: 'text'
+    default: 'text',
   })
   @IsOptional()
   @IsEnum(['text', 'file', 'image', 'proposal', 'contract'])
   type?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'File attachments',
-    type: [AttachmentDto]
+    type: [AttachmentDto],
   })
   @IsOptional()
   @IsArray()
@@ -73,7 +82,9 @@ export class CreateConversationDto {
   @IsMongoId({ each: true })
   participants: string[];
 
-  @ApiPropertyOptional({ description: 'Project ID if conversation is related to a project' })
+  @ApiPropertyOptional({
+    description: 'Project ID if conversation is related to a project',
+  })
   @IsOptional()
   @IsMongoId()
   projectId?: string;
@@ -83,10 +94,10 @@ export class CreateConversationDto {
   @IsString()
   title?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Type of conversation',
     enum: ['project', 'support', 'general'],
-    default: 'project'
+    default: 'project',
   })
   @IsOptional()
   @IsEnum(['project', 'support', 'general'])
@@ -94,7 +105,10 @@ export class CreateConversationDto {
 }
 
 export class MessageQueryDto {
-  @ApiPropertyOptional({ description: 'Page number for pagination', default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @IsOptional()
   page?: number = 1;
 

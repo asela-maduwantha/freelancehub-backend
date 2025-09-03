@@ -23,12 +23,12 @@ import {
 import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../modules/auth/guards/roles.guard';
 import { ReviewsService } from './reviews.service';
-import { 
-  CreateReviewDto, 
-  UpdateReviewDto, 
-  ReviewResponseDto, 
+import {
+  CreateReviewDto,
+  UpdateReviewDto,
+  ReviewResponseDto,
   ReviewQueryDto,
-  ReportReviewDto 
+  ReportReviewDto,
 } from './dto/reviews.dto';
 
 @ApiTags('Reviews')
@@ -39,38 +39,35 @@ export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Post()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create a review',
-    description: 'Create a new review for a completed project'
+    description: 'Create a new review for a completed project',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
-    description: 'Review created successfully' 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Review created successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Review already exists or invalid data' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Review already exists or invalid data',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Not authorized to review this user' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Not authorized to review this user',
   })
   @ApiBody({ type: CreateReviewDto })
-  async createReview(
-    @Request() req,
-    @Body() createReviewDto: CreateReviewDto,
-  ) {
+  async createReview(@Request() req, @Body() createReviewDto: CreateReviewDto) {
     return this.reviewsService.createReview(req.user.userId, createReviewDto);
   }
 
   @Get()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get reviews',
-    description: 'Retrieve reviews with filtering and pagination'
+    description: 'Retrieve reviews with filtering and pagination',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Reviews retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Reviews retrieved successfully',
   })
   @ApiQuery({ type: ReviewQueryDto })
   async getReviews(@Query() query: ReviewQueryDto) {
@@ -78,30 +75,43 @@ export class ReviewsController {
   }
 
   @Get('featured')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get featured reviews',
-    description: 'Retrieve featured reviews for the platform'
+    description: 'Retrieve featured reviews for the platform',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Featured reviews retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Featured reviews retrieved successfully',
   })
-  @ApiQuery({ name: 'limit', required: false, description: 'Maximum number of reviews to return' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Maximum number of reviews to return',
+  })
   async getFeaturedReviews(@Query('limit') limit: number = 10) {
     return this.reviewsService.getFeaturedReviews(limit);
   }
 
   @Get('top-rated')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get top-rated users',
-    description: 'Retrieve top-rated freelancers or clients'
+    description: 'Retrieve top-rated freelancers or clients',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Top-rated users retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Top-rated users retrieved successfully',
   })
-  @ApiQuery({ name: 'userType', required: false, enum: ['freelancer', 'client'], description: 'Type of users to retrieve' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Maximum number of users to return' })
+  @ApiQuery({
+    name: 'userType',
+    required: false,
+    enum: ['freelancer', 'client'],
+    description: 'Type of users to retrieve',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Maximum number of users to return',
+  })
   async getTopRatedUsers(
     @Query('userType') userType: 'freelancer' | 'client' = 'freelancer',
     @Query('limit') limit: number = 10,
@@ -110,13 +120,13 @@ export class ReviewsController {
   }
 
   @Get('user/:userId/stats')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get user rating statistics',
-    description: 'Get detailed rating statistics for a specific user'
+    description: 'Get detailed rating statistics for a specific user',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'User rating statistics retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User rating statistics retrieved successfully',
   })
   @ApiParam({ name: 'userId', description: 'User ID to get statistics for' })
   async getUserRatingStats(@Param('userId') userId: string) {
@@ -124,17 +134,17 @@ export class ReviewsController {
   }
 
   @Get(':reviewId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get review by ID',
-    description: 'Retrieve a specific review by its ID'
+    description: 'Retrieve a specific review by its ID',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Review retrieved successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Review retrieved successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Review not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Review not found',
   })
   @ApiParam({ name: 'reviewId', description: 'Review ID to retrieve' })
   async getReviewById(@Param('reviewId') reviewId: string) {
@@ -142,21 +152,21 @@ export class ReviewsController {
   }
 
   @Put(':reviewId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update review',
-    description: 'Update your own review (within 30 days of creation)'
+    description: 'Update your own review (within 30 days of creation)',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Review updated successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Review updated successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Cannot update this review' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Cannot update this review',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Review not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Review not found',
   })
   @ApiParam({ name: 'reviewId', description: 'Review ID to update' })
   @ApiBody({ type: UpdateReviewDto })
@@ -165,50 +175,51 @@ export class ReviewsController {
     @Param('reviewId') reviewId: string,
     @Body() updateReviewDto: UpdateReviewDto,
   ) {
-    return this.reviewsService.updateReview(req.user.userId, reviewId, updateReviewDto);
+    return this.reviewsService.updateReview(
+      req.user.userId,
+      reviewId,
+      updateReviewDto,
+    );
   }
 
   @Delete(':reviewId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Delete review',
-    description: 'Delete your own review'
+    description: 'Delete your own review',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Review deleted successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Review deleted successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Cannot delete this review' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Cannot delete this review',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Review not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Review not found',
   })
   @ApiParam({ name: 'reviewId', description: 'Review ID to delete' })
-  async deleteReview(
-    @Request() req,
-    @Param('reviewId') reviewId: string,
-  ) {
+  async deleteReview(@Request() req, @Param('reviewId') reviewId: string) {
     return this.reviewsService.deleteReview(req.user.userId, reviewId);
   }
 
   @Post(':reviewId/response')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Add review response',
-    description: 'Add a response to a review about yourself'
+    description: 'Add a response to a review about yourself',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
-    description: 'Response added successfully' 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Response added successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Review already has a response' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Review already has a response',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Cannot respond to this review' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Cannot respond to this review',
   })
   @ApiParam({ name: 'reviewId', description: 'Review ID to respond to' })
   @ApiBody({ type: ReviewResponseDto })
@@ -217,73 +228,81 @@ export class ReviewsController {
     @Param('reviewId') reviewId: string,
     @Body() responseDto: ReviewResponseDto,
   ) {
-    return this.reviewsService.addReviewResponse(req.user.userId, reviewId, responseDto);
+    return this.reviewsService.addReviewResponse(
+      req.user.userId,
+      reviewId,
+      responseDto,
+    );
   }
 
   @Put(':reviewId/response')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update review response',
-    description: 'Update your response to a review'
+    description: 'Update your response to a review',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Response updated successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Response updated successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Review does not have a response' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Review does not have a response',
   })
-  @ApiResponse({ 
-    status: HttpStatus.FORBIDDEN, 
-    description: 'Cannot update this response' 
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Cannot update this response',
   })
-  @ApiParam({ name: 'reviewId', description: 'Review ID to update response for' })
+  @ApiParam({
+    name: 'reviewId',
+    description: 'Review ID to update response for',
+  })
   @ApiBody({ type: ReviewResponseDto })
   async updateReviewResponse(
     @Request() req,
     @Param('reviewId') reviewId: string,
     @Body() responseDto: ReviewResponseDto,
   ) {
-    return this.reviewsService.updateReviewResponse(req.user.userId, reviewId, responseDto);
+    return this.reviewsService.updateReviewResponse(
+      req.user.userId,
+      reviewId,
+      responseDto,
+    );
   }
 
   @Post(':reviewId/helpful')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Vote review as helpful',
-    description: 'Vote a review as helpful or remove your vote'
+    description: 'Vote a review as helpful or remove your vote',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Vote processed successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Vote processed successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Review not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Review not found',
   })
   @ApiParam({ name: 'reviewId', description: 'Review ID to vote on' })
-  async voteHelpful(
-    @Request() req,
-    @Param('reviewId') reviewId: string,
-  ) {
+  async voteHelpful(@Request() req, @Param('reviewId') reviewId: string) {
     return this.reviewsService.voteHelpful(req.user.userId, reviewId);
   }
 
   @Post(':reviewId/report')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Report review',
-    description: 'Report a review for inappropriate content'
+    description: 'Report a review for inappropriate content',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Review reported successfully' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Review reported successfully',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Review already reported by this user' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Review already reported by this user',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Review not found' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Review not found',
   })
   @ApiParam({ name: 'reviewId', description: 'Review ID to report' })
   @ApiBody({ type: ReportReviewDto })
@@ -292,6 +311,10 @@ export class ReviewsController {
     @Param('reviewId') reviewId: string,
     @Body() reportDto: ReportReviewDto,
   ) {
-    return this.reviewsService.reportReview(req.user.userId, reviewId, reportDto);
+    return this.reviewsService.reportReview(
+      req.user.userId,
+      reviewId,
+      reportDto,
+    );
   }
 }

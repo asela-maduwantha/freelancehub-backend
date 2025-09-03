@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
@@ -32,62 +36,66 @@ export class ClientService {
       completedProjects,
       recentProjects,
       recentApplications,
-      upcomingDeadlines
+      upcomingDeadlines,
     ] = await Promise.all([
       this.projectModel.countDocuments({
         clientId: new Types.ObjectId(clientId),
-        status: 'active'
+        status: 'active',
       }),
       this.projectModel.countDocuments({
-        clientId: new Types.ObjectId(clientId)
+        clientId: new Types.ObjectId(clientId),
       }),
-      this.paymentModel.aggregate([
-        {
-          $lookup: {
-            from: 'contracts',
-            localField: 'contractId',
-            foreignField: '_id',
-            as: 'contract'
-          }
-        },
-        { $unwind: '$contract' },
-        {
-          $match: {
-            'contract.clientId': new Types.ObjectId(clientId),
-            status: 'completed'
-          }
-        },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]).then(result => result[0]?.total || 0),
+      this.paymentModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'contracts',
+              localField: 'contractId',
+              foreignField: '_id',
+              as: 'contract',
+            },
+          },
+          { $unwind: '$contract' },
+          {
+            $match: {
+              'contract.clientId': new Types.ObjectId(clientId),
+              status: 'completed',
+            },
+          },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ])
+        .then((result) => result[0]?.total || 0),
       this.contractModel.countDocuments({
         clientId: new Types.ObjectId(clientId),
-        status: { $in: ['active', 'in_progress'] }
+        status: { $in: ['active', 'in_progress'] },
       }),
-      this.proposalModel.aggregate([
-        {
-          $lookup: {
-            from: 'projects',
-            localField: 'projectId',
-            foreignField: '_id',
-            as: 'project'
-          }
-        },
-        { $unwind: '$project' },
-        {
-          $match: {
-            'project.clientId': new Types.ObjectId(clientId),
-            status: 'pending'
-          }
-        },
-        { $count: 'total' }
-      ]).then(result => result[0]?.total || 0),
+      this.proposalModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'projects',
+              localField: 'projectId',
+              foreignField: '_id',
+              as: 'project',
+            },
+          },
+          { $unwind: '$project' },
+          {
+            $match: {
+              'project.clientId': new Types.ObjectId(clientId),
+              status: 'pending',
+            },
+          },
+          { $count: 'total' },
+        ])
+        .then((result) => result[0]?.total || 0),
       this.projectModel.countDocuments({
         clientId: new Types.ObjectId(clientId),
-        status: 'completed'
+        status: 'completed',
       }),
       this.getRecentProjects(clientId, 5),
       this.getRecentApplications(clientId, 5),
-      this.getUpcomingDeadlines(clientId)
+      this.getUpcomingDeadlines(clientId),
     ]);
 
     return {
@@ -97,11 +105,11 @@ export class ClientService {
         totalSpent,
         activeFreelancers,
         pendingProposals,
-        completedProjects
+        completedProjects,
       },
       recentProjects,
       recentApplications,
-      upcomingDeadlines
+      upcomingDeadlines,
     };
   }
 
@@ -113,79 +121,89 @@ export class ClientService {
       averageProjectBudget,
       projectCompletionRate,
       averageFreelancerRating,
-      repeatFreelancers
+      repeatFreelancers,
     ] = await Promise.all([
       this.projectModel.countDocuments({
-        clientId: new Types.ObjectId(clientId)
+        clientId: new Types.ObjectId(clientId),
       }),
-      this.paymentModel.aggregate([
-        {
-          $lookup: {
-            from: 'contracts',
-            localField: 'contractId',
-            foreignField: '_id',
-            as: 'contract'
-          }
-        },
-        { $unwind: '$contract' },
-        {
-          $match: {
-            'contract.clientId': new Types.ObjectId(clientId),
-            status: 'completed'
-          }
-        },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]).then(result => result[0]?.total || 0),
-      this.contractModel.distinct('freelancerId', {
-        clientId: new Types.ObjectId(clientId)
-      }).then(freelancers => freelancers.length),
-      this.projectModel.aggregate([
-        {
-          $match: {
-            clientId: new Types.ObjectId(clientId)
-          }
-        },
-        { $group: { _id: null, average: { $avg: '$budget.amount' } } }
-      ]).then(result => Math.round(result[0]?.average || 0)),
-      this.projectModel.aggregate([
-        {
-          $match: {
-            clientId: new Types.ObjectId(clientId)
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: 1 },
-            completed: {
-              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
-            }
-          }
-        }
-      ]).then(result => {
-        const data = result[0];
-        return data ? Math.round((data.completed / data.total) * 100) : 0;
-      }),
+      this.paymentModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'contracts',
+              localField: 'contractId',
+              foreignField: '_id',
+              as: 'contract',
+            },
+          },
+          { $unwind: '$contract' },
+          {
+            $match: {
+              'contract.clientId': new Types.ObjectId(clientId),
+              status: 'completed',
+            },
+          },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ])
+        .then((result) => result[0]?.total || 0),
+      this.contractModel
+        .distinct('freelancerId', {
+          clientId: new Types.ObjectId(clientId),
+        })
+        .then((freelancers) => freelancers.length),
+      this.projectModel
+        .aggregate([
+          {
+            $match: {
+              clientId: new Types.ObjectId(clientId),
+            },
+          },
+          { $group: { _id: null, average: { $avg: '$budget.amount' } } },
+        ])
+        .then((result) => Math.round(result[0]?.average || 0)),
+      this.projectModel
+        .aggregate([
+          {
+            $match: {
+              clientId: new Types.ObjectId(clientId),
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: 1 },
+              completed: {
+                $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+              },
+            },
+          },
+        ])
+        .then((result) => {
+          const data = result[0];
+          return data ? Math.round((data.completed / data.total) * 100) : 0;
+        }),
       4.8, // Mock average rating
-      this.contractModel.aggregate([
-        {
-          $match: {
-            clientId: new Types.ObjectId(clientId)
-          }
-        },
-        {
-          $group: {
-            _id: '$freelancerId',
-            count: { $sum: 1 }
-          }
-        },
-        {
-          $match: {
-            count: { $gt: 1 }
-          }
-        },
-        { $count: 'total' }
-      ]).then(result => result[0]?.total || 0)
+      this.contractModel
+        .aggregate([
+          {
+            $match: {
+              clientId: new Types.ObjectId(clientId),
+            },
+          },
+          {
+            $group: {
+              _id: '$freelancerId',
+              count: { $sum: 1 },
+            },
+          },
+          {
+            $match: {
+              count: { $gt: 1 },
+            },
+          },
+          { $count: 'total' },
+        ])
+        .then((result) => result[0]?.total || 0),
     ]);
 
     return {
@@ -196,7 +214,8 @@ export class ClientService {
       projectCompletionRate,
       averageFreelancerRating,
       repeatFreelancers,
-      memberSince: (await this.userModel.findById(clientId))?.createdAt || new Date()
+      memberSince:
+        (await this.userModel.findById(clientId))?.createdAt || new Date(),
     };
   }
 
@@ -207,46 +226,53 @@ export class ClientService {
           from: 'projects',
           localField: 'projectId',
           foreignField: '_id',
-          as: 'project'
-        }
+          as: 'project',
+        },
       },
       { $unwind: '$project' },
       {
         $match: {
-          'project.clientId': new Types.ObjectId(clientId)
-        }
+          'project.clientId': new Types.ObjectId(clientId),
+        },
       },
       {
         $lookup: {
           from: 'users',
           localField: 'freelancerId',
           foreignField: '_id',
-          as: 'freelancer'
-        }
+          as: 'freelancer',
+        },
       },
       { $unwind: '$freelancer' },
       {
         $project: {
           projectTitle: '$project.title',
           freelancerName: {
-            $concat: ['$freelancer.profile.firstName', ' ', '$freelancer.profile.lastName']
+            $concat: [
+              '$freelancer.profile.firstName',
+              ' ',
+              '$freelancer.profile.lastName',
+            ],
           },
           freelancerAvatar: '$freelancer.profile.avatar',
           freelancerRating: '$freelancer.freelancerProfile.rating',
           proposalAmount: '$pricing.amount',
           proposalStatus: '$status',
           submittedAt: '$createdAt',
-          coverLetter: { $substr: ['$coverLetter', 0, 100] }
-        }
+          coverLetter: { $substr: ['$coverLetter', 0, 100] },
+        },
       },
       { $sort: { submittedAt: -1 } },
-      { $limit: limit }
+      { $limit: limit },
     ]);
 
     return applications;
   }
 
-  async getClientProjects(clientId: string, options: { status?: string; page: number; limit: number }) {
+  async getClientProjects(
+    clientId: string,
+    options: { status?: string; page: number; limit: number },
+  ) {
     const { status, page, limit } = options;
     const skip = (page - 1) * limit;
 
@@ -263,28 +289,31 @@ export class ClientService {
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.projectModel.countDocuments(query)
+      this.projectModel.countDocuments(query),
     ]);
 
     // Add proposal counts
     const projectsWithCounts = await Promise.all(
       projects.map(async (project) => {
         const proposalCount = await this.proposalModel.countDocuments({
-          projectId: project._id
+          projectId: project._id,
         });
         return { ...project, proposalCount };
-      })
+      }),
     );
 
     return {
       projects: projectsWithCounts,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
-  async getPaymentHistory(clientId: string, options: { page: number; limit: number; status?: string }) {
+  async getPaymentHistory(
+    clientId: string,
+    options: { page: number; limit: number; status?: string },
+  ) {
     const { page, limit, status } = options;
     const skip = (page - 1) * limit;
 
@@ -300,23 +329,23 @@ export class ClientService {
             from: 'contracts',
             localField: 'contractId',
             foreignField: '_id',
-            as: 'contract'
-          }
+            as: 'contract',
+          },
         },
         { $unwind: '$contract' },
         {
           $match: {
             'contract.clientId': new Types.ObjectId(clientId),
-            ...matchCondition
-          }
+            ...matchCondition,
+          },
         },
         {
           $lookup: {
             from: 'projects',
             localField: 'contract.projectId',
             foreignField: '_id',
-            as: 'project'
-          }
+            as: 'project',
+          },
         },
         { $unwind: '$project' },
         {
@@ -324,8 +353,8 @@ export class ClientService {
             from: 'users',
             localField: 'contract.freelancerId',
             foreignField: '_id',
-            as: 'freelancer'
-          }
+            as: 'freelancer',
+          },
         },
         { $unwind: '$freelancer' },
         {
@@ -335,46 +364,52 @@ export class ClientService {
             createdAt: 1,
             projectTitle: '$project.title',
             freelancerName: {
-              $concat: ['$freelancer.profile.firstName', ' ', '$freelancer.profile.lastName']
-            }
-          }
+              $concat: [
+                '$freelancer.profile.firstName',
+                ' ',
+                '$freelancer.profile.lastName',
+              ],
+            },
+          },
         },
         { $sort: { createdAt: -1 } },
         { $skip: skip },
-        { $limit: limit }
+        { $limit: limit },
       ]),
-      this.paymentModel.aggregate([
-        {
-          $lookup: {
-            from: 'contracts',
-            localField: 'contractId',
-            foreignField: '_id',
-            as: 'contract'
-          }
-        },
-        { $unwind: '$contract' },
-        {
-          $match: {
-            'contract.clientId': new Types.ObjectId(clientId),
-            ...matchCondition
-          }
-        },
-        { $count: 'total' }
-      ]).then(result => result[0]?.total || 0)
+      this.paymentModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'contracts',
+              localField: 'contractId',
+              foreignField: '_id',
+              as: 'contract',
+            },
+          },
+          { $unwind: '$contract' },
+          {
+            $match: {
+              'contract.clientId': new Types.ObjectId(clientId),
+              ...matchCondition,
+            },
+          },
+          { $count: 'total' },
+        ])
+        .then((result) => result[0]?.total || 0),
     ]);
 
     return {
       payments,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   async addFreelancerToFavorites(clientId: string, freelancerId: string) {
     const [client, freelancer] = await Promise.all([
       this.userModel.findById(clientId),
-      this.userModel.findById(freelancerId)
+      this.userModel.findById(freelancerId),
     ]);
 
     if (!client || !client.role.includes('client')) {
@@ -391,7 +426,7 @@ export class ClientService {
         favoriteFreelancers: [],
         projectHistory: [],
         totalSpent: 0,
-        projectsPosted: 0
+        projectsPosted: 0,
       };
     }
 
@@ -400,43 +435,55 @@ export class ClientService {
     }
 
     const freelancerObjectId = new Types.ObjectId(freelancerId);
-    if (!client.clientProfile.favoriteFreelancers.some((id: any) => id.equals(freelancerObjectId))) {
+    if (
+      !client.clientProfile.favoriteFreelancers.some((id: any) =>
+        id.equals(freelancerObjectId),
+      )
+    ) {
       client.clientProfile.favoriteFreelancers.push(freelancerObjectId);
       await client.save();
     }
 
-    return { success: true, message: 'Freelancer added to favorites successfully' };
+    return {
+      success: true,
+      message: 'Freelancer added to favorites successfully',
+    };
   }
 
-  async getFavoriteFreelancers(clientId: string, options: { page: number; limit: number }) {
+  async getFavoriteFreelancers(
+    clientId: string,
+    options: { page: number; limit: number },
+  ) {
     const { page, limit } = options;
     const skip = (page - 1) * limit;
 
-    const client = await this.userModel.findById(clientId) as any;
+    const client = (await this.userModel.findById(clientId)) as any;
     if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can access favorites');
     }
 
-    const favoriteIds = (client as any).clientProfile?.favoriteFreelancers || [];
+    const favoriteIds = client.clientProfile?.favoriteFreelancers || [];
 
     const [freelancers, total] = await Promise.all([
       this.userModel
         .find({
           _id: { $in: favoriteIds },
-          role: 'freelancer'
+          role: 'freelancer',
         })
-        .select('username profile freelancerProfile.title freelancerProfile.skills freelancerProfile.hourlyRate freelancerProfile.rating')
+        .select(
+          'username profile freelancerProfile.title freelancerProfile.skills freelancerProfile.hourlyRate freelancerProfile.rating',
+        )
         .skip(skip)
         .limit(limit)
         .lean(),
-      favoriteIds.length
+      favoriteIds.length,
     ]);
 
     return {
       freelancers,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
@@ -450,17 +497,26 @@ export class ClientService {
     page: number;
     limit: number;
   }) {
-    const { skills, minRate, maxRate, location, availability, experience, page, limit } = criteria;
+    const {
+      skills,
+      minRate,
+      maxRate,
+      location,
+      availability,
+      experience,
+      page,
+      limit,
+    } = criteria;
     const skip = (page - 1) * limit;
 
     const query: any = {
       role: 'freelancer',
-      isVerified: true
+      isVerified: true,
     };
 
     if (skills && skills.length > 0) {
       query['freelancerProfile.skills'] = {
-        $in: skills.map(skill => new RegExp(skill, 'i'))
+        $in: skills.map((skill) => new RegExp(skill, 'i')),
       };
     }
 
@@ -473,7 +529,7 @@ export class ClientService {
     if (location) {
       query.$or = [
         { 'profile.location.city': new RegExp(location, 'i') },
-        { 'profile.location.country': new RegExp(location, 'i') }
+        { 'profile.location.country': new RegExp(location, 'i') },
       ];
     }
 
@@ -489,11 +545,14 @@ export class ClientService {
       this.userModel
         .find(query)
         .select('username profile freelancerProfile')
-        .sort({ 'freelancerProfile.rating': -1, 'freelancerProfile.completedProjects': -1 })
+        .sort({
+          'freelancerProfile.rating': -1,
+          'freelancerProfile.completedProjects': -1,
+        })
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.userModel.countDocuments(query)
+      this.userModel.countDocuments(query),
     ]);
 
     return {
@@ -501,22 +560,25 @@ export class ClientService {
       total,
       page,
       totalPages: Math.ceil(total / limit),
-      searchCriteria: criteria
+      searchCriteria: criteria,
     };
   }
 
-  async getSpendingAnalytics(clientId: string, options: { period: string; year?: number }) {
+  async getSpendingAnalytics(
+    clientId: string,
+    options: { period: string; year?: number },
+  ) {
     const { period, year = new Date().getFullYear() } = options;
 
     let groupBy: any;
     if (period === 'monthly') {
       groupBy = {
         year: { $year: '$createdAt' },
-        month: { $month: '$createdAt' }
+        month: { $month: '$createdAt' },
       };
     } else {
       groupBy = {
-        year: { $year: '$createdAt' }
+        year: { $year: '$createdAt' },
       };
     }
 
@@ -526,30 +588,36 @@ export class ClientService {
           from: 'contracts',
           localField: 'contractId',
           foreignField: '_id',
-          as: 'contract'
-        }
+          as: 'contract',
+        },
       },
       { $unwind: '$contract' },
       {
         $match: {
           'contract.clientId': new Types.ObjectId(clientId),
           status: 'completed',
-          $expr: { $eq: [{ $year: '$createdAt' }, year] }
-        }
+          $expr: { $eq: [{ $year: '$createdAt' }, year] },
+        },
       },
       {
         $group: {
           _id: groupBy,
           totalSpent: { $sum: '$amount' },
           paymentCount: { $sum: 1 },
-          avgPayment: { $avg: '$amount' }
-        }
+          avgPayment: { $avg: '$amount' },
+        },
       },
-      { $sort: { '_id.year': 1, '_id.month': 1 } }
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]);
 
-    const totalSpent = analytics.reduce((sum, item) => sum + item.totalSpent, 0);
-    const totalPayments = analytics.reduce((sum, item) => sum + item.paymentCount, 0);
+    const totalSpent = analytics.reduce(
+      (sum, item) => sum + item.totalSpent,
+      0,
+    );
+    const totalPayments = analytics.reduce(
+      (sum, item) => sum + item.paymentCount,
+      0,
+    );
 
     return {
       period,
@@ -558,45 +626,50 @@ export class ClientService {
       summary: {
         totalSpent,
         totalPayments,
-        averagePayment: totalPayments > 0 ? Math.round(totalSpent / totalPayments) : 0
-      }
+        averagePayment:
+          totalPayments > 0 ? Math.round(totalSpent / totalPayments) : 0,
+      },
     };
   }
 
   async getSavedSearches(clientId: string) {
-    const client = await this.userModel.findById(clientId) as any;
+    const client = (await this.userModel.findById(clientId)) as any;
     if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can access saved searches');
     }
 
-    return (client as any).clientProfile?.savedSearches || [];
+    return client.clientProfile?.savedSearches || [];
   }
 
   async saveSearch(clientId: string, searchDto: any) {
-    const client = await this.userModel.findById(clientId) as any;
+    const client = (await this.userModel.findById(clientId)) as any;
     if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can save searches');
     }
 
-    if (!(client as any).clientProfile) {
-      (client as any).clientProfile = {};
+    if (!client.clientProfile) {
+      client.clientProfile = {};
     }
 
-    if (!(client as any).clientProfile.savedSearches) {
-      (client as any).clientProfile.savedSearches = [];
+    if (!client.clientProfile.savedSearches) {
+      client.clientProfile.savedSearches = [];
     }
 
     const savedSearch = {
       id: new Types.ObjectId(),
       name: searchDto.name,
       criteria: searchDto.criteria,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
-    (client as any).clientProfile.savedSearches.push(savedSearch);
+    client.clientProfile.savedSearches.push(savedSearch);
     await client.save();
 
-    return { success: true, message: 'Search saved successfully', search: savedSearch };
+    return {
+      success: true,
+      message: 'Search saved successfully',
+      search: savedSearch,
+    };
   }
 
   // Helper methods
@@ -614,7 +687,7 @@ export class ClientService {
       .find({
         clientId: new Types.ObjectId(clientId),
         status: { $in: ['active', 'in_progress'] },
-        deadline: { $gte: new Date() }
+        deadline: { $gte: new Date() },
       })
       .populate('projectId', 'title')
       .populate('freelancerId', 'username profile.firstName profile.lastName')
@@ -627,7 +700,10 @@ export class ClientService {
       projectTitle: contract.projectId?.title,
       freelancerName: `${contract.freelancerId?.profile?.firstName} ${contract.freelancerId?.profile?.lastName}`,
       deadline: contract.deadline,
-      daysLeft: Math.ceil((new Date(contract.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      daysLeft: Math.ceil(
+        (new Date(contract.deadline).getTime() - new Date().getTime()) /
+          (1000 * 60 * 60 * 24),
+      ),
     }));
   }
 }

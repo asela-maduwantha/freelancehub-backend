@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
@@ -7,7 +12,11 @@ import { Payment, PaymentDocument } from '../schemas/payment.schema';
 import { Message, MessageDocument } from '../schemas/message.schema';
 import { Review, ReviewDocument } from '../schemas/review.schema';
 import { FileUpload, FileUploadDocument } from '../schemas/file-upload.schema';
-import { AdminStatsDto, UserManagementDto, UserActionDto } from './dto/admin.dto';
+import {
+  AdminStatsDto,
+  UserManagementDto,
+  UserActionDto,
+} from './dto/admin.dto';
 
 @Injectable()
 export class AdminService {
@@ -19,7 +28,8 @@ export class AdminService {
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
-    @InjectModel(FileUpload.name) private fileUploadModel: Model<FileUploadDocument>,
+    @InjectModel(FileUpload.name)
+    private fileUploadModel: Model<FileUploadDocument>,
   ) {}
 
   async getDashboardStats(statsDto: AdminStatsDto) {
@@ -38,23 +48,25 @@ export class AdminService {
       revenueThisPeriod,
     ] = await Promise.all([
       this.userModel.countDocuments({ isActive: true }),
-      this.userModel.countDocuments({ 
-        isActive: true, 
-        lastLogin: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } 
+      this.userModel.countDocuments({
+        isActive: true,
+        lastLogin: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
       }),
       this.projectModel.countDocuments(),
-      this.projectModel.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
+      this.projectModel.countDocuments({
+        status: { $in: ['open', 'in_progress'] },
+      }),
       this.paymentModel.countDocuments(),
       this.calculateTotalRevenue(),
-      this.userModel.countDocuments({ 
+      this.userModel.countDocuments({
         createdAt: dateFilter,
-        isActive: true 
+        isActive: true,
       }),
-      this.projectModel.countDocuments({ 
-        createdAt: dateFilter 
+      this.projectModel.countDocuments({
+        createdAt: dateFilter,
       }),
-      this.paymentModel.countDocuments({ 
-        createdAt: dateFilter 
+      this.paymentModel.countDocuments({
+        createdAt: dateFilter,
       }),
       this.calculateRevenueForPeriod(dateFilter),
     ]);
@@ -106,7 +118,7 @@ export class AdminService {
 
     // Build query filter
     const filter: any = {};
-    
+
     if (role) {
       filter.role = role;
     }
@@ -162,12 +174,24 @@ export class AdminService {
     }
 
     // Get user statistics
-    const [projectsCreated, projectsWorked, totalEarned, totalSpent, reviewsCount] = await Promise.all([
-      this.projectModel.countDocuments({ clientId: new Types.ObjectId(userId) }),
-      this.projectModel.countDocuments({ freelancerId: new Types.ObjectId(userId) }),
+    const [
+      projectsCreated,
+      projectsWorked,
+      totalEarned,
+      totalSpent,
+      reviewsCount,
+    ] = await Promise.all([
+      this.projectModel.countDocuments({
+        clientId: new Types.ObjectId(userId),
+      }),
+      this.projectModel.countDocuments({
+        freelancerId: new Types.ObjectId(userId),
+      }),
       this.calculateUserEarnings(userId),
       this.calculateUserSpending(userId),
-      this.reviewModel.countDocuments({ revieweeId: new Types.ObjectId(userId) }),
+      this.reviewModel.countDocuments({
+        revieweeId: new Types.ObjectId(userId),
+      }),
     ]);
 
     return {
@@ -182,7 +206,11 @@ export class AdminService {
     };
   }
 
-  async performUserAction(userId: string, actionDto: UserActionDto, adminId: string) {
+  async performUserAction(
+    userId: string,
+    actionDto: UserActionDto,
+    adminId: string,
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -223,7 +251,9 @@ export class AdminService {
 
     await user.save();
 
-    this.logger.log(`Admin ${adminId} performed action ${actionDto.action} on user ${userId}`);
+    this.logger.log(
+      `Admin ${adminId} performed action ${actionDto.action} on user ${userId}`,
+    );
 
     return {
       message: `User ${actionDto.action} action completed successfully`,
@@ -242,17 +272,13 @@ export class AdminService {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const [
-      activeConnections,
-      recentErrors,
-      storageUsage,
-      databaseStats,
-    ] = await Promise.all([
-      this.getActiveConnections(),
-      this.getRecentErrors(oneDayAgo),
-      this.getStorageUsage(),
-      this.getDatabaseStats(),
-    ]);
+    const [activeConnections, recentErrors, storageUsage, databaseStats] =
+      await Promise.all([
+        this.getActiveConnections(),
+        this.getRecentErrors(oneDayAgo),
+        this.getStorageUsage(),
+        this.getDatabaseStats(),
+      ]);
 
     return {
       status: 'healthy',
@@ -346,11 +372,11 @@ export class AdminService {
 
   private async calculateUserEarnings(userId: string): Promise<number> {
     const result = await this.paymentModel.aggregate([
-      { 
-        $match: { 
-          payeeId: new Types.ObjectId(userId), 
-          status: 'completed' 
-        } 
+      {
+        $match: {
+          payeeId: new Types.ObjectId(userId),
+          status: 'completed',
+        },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
@@ -359,11 +385,11 @@ export class AdminService {
 
   private async calculateUserSpending(userId: string): Promise<number> {
     const result = await this.paymentModel.aggregate([
-      { 
-        $match: { 
-          payerId: new Types.ObjectId(userId), 
-          status: 'completed' 
-        } 
+      {
+        $match: {
+          payerId: new Types.ObjectId(userId),
+          status: 'completed',
+        },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
@@ -384,7 +410,9 @@ export class AdminService {
 
   private async getStorageUsage(): Promise<any> {
     const fileStats = await this.fileUploadModel.aggregate([
-      { $group: { _id: null, totalSize: { $sum: '$size' }, count: { $sum: 1 } } },
+      {
+        $group: { _id: null, totalSize: { $sum: '$size' }, count: { $sum: 1 } },
+      },
     ]);
 
     return {
@@ -395,12 +423,13 @@ export class AdminService {
   }
 
   private async getDatabaseStats(): Promise<any> {
-    const [userCount, projectCount, paymentCount, messageCount] = await Promise.all([
-      this.userModel.countDocuments(),
-      this.projectModel.countDocuments(),
-      this.paymentModel.countDocuments(),
-      this.messageModel.countDocuments(),
-    ]);
+    const [userCount, projectCount, paymentCount, messageCount] =
+      await Promise.all([
+        this.userModel.countDocuments(),
+        this.projectModel.countDocuments(),
+        this.paymentModel.countDocuments(),
+        this.messageModel.countDocuments(),
+      ]);
 
     return {
       collections: {

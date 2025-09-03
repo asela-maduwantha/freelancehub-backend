@@ -15,13 +15,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('jwt.secret') || 'fallback-jwt-secret',
+      secretOrKey:
+        configService.get<string>('jwt.secret') || 'fallback-jwt-secret',
     });
   }
 
   async validate(payload: any) {
-    const user = await this.userModel.findById(payload.sub).select('-password -refreshTokens -twoFactorAuth.secret -twoFactorAuth.backupCodes');
-    
+    const user = await this.userModel
+      .findById(payload.sub)
+      .select(
+        '-password -refreshTokens -twoFactorAuth.secret -twoFactorAuth.backupCodes',
+      );
+
     if (!user) {
       throw new UnauthorizedException('User not found');
     }

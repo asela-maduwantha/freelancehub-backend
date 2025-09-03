@@ -2,7 +2,10 @@ import { IsEnum, IsOptional, IsString, IsMongoId } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FileUploadDto {
-  @ApiProperty({ description: 'File category', enum: ['avatar', 'project_attachment', 'message_attachment', 'document'] })
+  @ApiProperty({
+    description: 'File category',
+    enum: ['avatar', 'project_attachment', 'message_attachment', 'document'],
+  })
   @IsEnum(['avatar', 'project_attachment', 'message_attachment', 'document'])
   category: string;
 
@@ -11,7 +14,11 @@ export class FileUploadDto {
   @IsMongoId()
   relatedTo?: string;
 
-  @ApiProperty({ description: 'Related entity model', enum: ['Project', 'Message', 'User'], required: false })
+  @ApiProperty({
+    description: 'Related entity model',
+    enum: ['Project', 'Message', 'User'],
+    required: false,
+  })
   @IsOptional()
   @IsEnum(['Project', 'Message', 'User'])
   onModel?: string;

@@ -26,13 +26,24 @@ import { DatabaseHealthService } from './common/services/database-health.service
 
 // Import schemas
 import { User, UserSchema } from './schemas/user.schema';
-import { FreelancerProfile, FreelancerProfileSchema } from './schemas/freelancer-profile.schema';
+import {
+  FreelancerProfile,
+  FreelancerProfileSchema,
+} from './schemas/freelancer-profile.schema';
 import { Project, ProjectSchema } from './schemas/project.schema';
 import { Proposal, ProposalSchema } from './schemas/proposal.schema';
 import { Contract, ContractSchema } from './schemas/contract.schema';
 import { Payment, PaymentSchema } from './schemas/payment.schema';
-import { Message, MessageSchema, Conversation, ConversationSchema } from './schemas/message.schema';
-import { Notification, NotificationSchema } from './schemas/notification.schema';
+import {
+  Message,
+  MessageSchema,
+  Conversation,
+  ConversationSchema,
+} from './schemas/message.schema';
+import {
+  Notification,
+  NotificationSchema,
+} from './schemas/notification.schema';
 import { Review, ReviewSchema } from './schemas/review.schema';
 import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
 
@@ -98,7 +109,7 @@ import { FileUpload, FileUploadSchema } from './schemas/file-upload.schema';
     AdminModule,
     PublicModule,
     FreelancerModule,
-    ClientModule
+    ClientModule,
   ],
   controllers: [AppController],
   providers: [AppService, UnhandledExceptionsService, DatabaseHealthService],

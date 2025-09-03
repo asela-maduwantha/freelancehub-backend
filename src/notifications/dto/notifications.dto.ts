@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsEnum, IsBoolean, IsObject, IsArray, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsObject,
+  IsArray,
+  IsDateString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateNotificationDto {
@@ -10,7 +18,7 @@ export class CreateNotificationDto {
   @IsString()
   message: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Type of notification',
     enum: [
       'project_created',
@@ -26,8 +34,8 @@ export class CreateNotificationDto {
       'review_received',
       'dispute_opened',
       'system_update',
-      'security_alert'
-    ]
+      'security_alert',
+    ],
   })
   @IsEnum([
     'project_created',
@@ -43,14 +51,14 @@ export class CreateNotificationDto {
     'review_received',
     'dispute_opened',
     'system_update',
-    'security_alert'
+    'security_alert',
   ])
   type: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Priority level',
     enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium'
+    default: 'medium',
   })
   @IsOptional()
   @IsEnum(['low', 'medium', 'high', 'urgent'])
@@ -88,11 +96,11 @@ export class CreateNotificationDto {
   @IsDateString()
   expiresAt?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Delivery channels',
     enum: ['email', 'push', 'sms', 'in_app'],
     isArray: true,
-    default: ['in_app']
+    default: ['in_app'],
   })
   @IsOptional()
   @IsArray()
@@ -123,7 +131,10 @@ export class UpdateNotificationDto {
 }
 
 export class NotificationQueryDto {
-  @ApiPropertyOptional({ description: 'Page number for pagination', default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @IsOptional()
   page?: number = 1;
 
@@ -147,7 +158,7 @@ export class NotificationQueryDto {
     'review_received',
     'dispute_opened',
     'system_update',
-    'security_alert'
+    'security_alert',
   ])
   type?: string;
 

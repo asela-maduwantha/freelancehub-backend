@@ -27,10 +27,29 @@ export class Payment {
   @Prop({ enum: ['USD', 'LKR'], default: 'USD' })
   currency: string;
 
-  @Prop({ enum: ['escrow_funding', 'milestone_release', 'refund', 'platform_fee', 'dispute_settlement'], required: true })
+  @Prop({
+    enum: [
+      'escrow_funding',
+      'milestone_release',
+      'refund',
+      'platform_fee',
+      'dispute_settlement',
+    ],
+    required: true,
+  })
   type: string;
 
-  @Prop({ enum: ['pending', 'processing', 'succeeded', 'failed', 'cancelled', 'refunded'], default: 'pending' })
+  @Prop({
+    enum: [
+      'pending',
+      'processing',
+      'succeeded',
+      'failed',
+      'cancelled',
+      'refunded',
+    ],
+    default: 'pending',
+  })
   status: string;
 
   @Prop({ required: true, min: 0 })

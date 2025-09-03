@@ -1,15 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Review } from './schemas/review.schema';
 import { User } from '../schemas/user.schema';
 import { Project } from '../schemas/project.schema';
-import { 
-  CreateReviewDto, 
-  UpdateReviewDto, 
-  ReviewResponseDto, 
+import {
+  CreateReviewDto,
+  UpdateReviewDto,
+  ReviewResponseDto,
   ReviewQueryDto,
-  ReportReviewDto 
+  ReportReviewDto,
 } from './dto/reviews.dto';
 
 @Injectable()
@@ -21,17 +26,17 @@ export class ReviewsService {
   ) {}
 
   async createReview(reviewerId: string, createReviewDto: CreateReviewDto) {
-    const { 
-      revieweeId, 
-      projectId, 
-      contractId, 
-      rating, 
-      comment, 
-      reviewType, 
-      criteria, 
-      tags = [], 
-      isPublic = true, 
-      metadata 
+    const {
+      revieweeId,
+      projectId,
+      contractId,
+      rating,
+      comment,
+      reviewType,
+      criteria,
+      tags = [],
+      isPublic = true,
+      metadata,
     } = createReviewDto;
 
     // Validate reviewee exists
@@ -47,20 +52,29 @@ export class ReviewsService {
     }
 
     // Verify reviewer has permission to review this user for this project
-    const canReview = await this.verifyReviewPermission(reviewerId, revieweeId, projectId, reviewType);
+    const canReview = await this.verifyReviewPermission(
+      reviewerId,
+      revieweeId,
+      projectId,
+      reviewType,
+    );
     if (!canReview) {
-      throw new ForbiddenException('You cannot review this user for this project');
+      throw new ForbiddenException(
+        'You cannot review this user for this project',
+      );
     }
 
     // Check if review already exists
     const existingReview = await this.reviewModel.findOne({
       reviewerId: new Types.ObjectId(reviewerId),
       revieweeId: new Types.ObjectId(revieweeId),
-      projectId: new Types.ObjectId(projectId)
+      projectId: new Types.ObjectId(projectId),
     });
 
     if (existingReview) {
-      throw new BadRequestException('You have already reviewed this user for this project');
+      throw new BadRequestException(
+        'You have already reviewed this user for this project',
+      );
     }
 
     const review = new this.reviewModel({
@@ -77,8 +91,8 @@ export class ReviewsService {
       metadata: {
         ...metadata,
         projectTitle: project.title,
-        projectCategory: project.category
-      }
+        projectCategory: project.category,
+      },
     });
 
     const savedReview = await review.save();
@@ -90,18 +104,18 @@ export class ReviewsService {
   }
 
   async getReviews(query: ReviewQueryDto) {
-    const { 
-      page = 1, 
-      limit = 20, 
-      revieweeId, 
-      reviewerId, 
-      projectId, 
-      reviewType, 
-      minRating, 
-      maxRating, 
-      publicOnly, 
-      featuredOnly, 
-      tags 
+    const {
+      page = 1,
+      limit = 20,
+      revieweeId,
+      reviewerId,
+      projectId,
+      reviewType,
+      minRating,
+      maxRating,
+      publicOnly,
+      featuredOnly,
+      tags,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -126,8 +140,14 @@ export class ReviewsService {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('reviewerId', 'username profile.firstName profile.lastName profile.avatar')
-      .populate('revieweeId', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'reviewerId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
+      .populate(
+        'revieweeId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('projectId', 'title category status')
       .exec();
 
@@ -139,16 +159,22 @@ export class ReviewsService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
   async getReviewById(reviewId: string) {
     const review = await this.reviewModel
       .findById(reviewId)
-      .populate('reviewerId', 'username profile.firstName profile.lastName profile.avatar')
-      .populate('revieweeId', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'reviewerId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
+      .populate(
+        'revieweeId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('projectId', 'title category status')
       .exec();
 
@@ -159,9 +185,13 @@ export class ReviewsService {
     return review;
   }
 
-  async updateReview(userId: string, reviewId: string, updateReviewDto: UpdateReviewDto) {
+  async updateReview(
+    userId: string,
+    reviewId: string,
+    updateReviewDto: UpdateReviewDto,
+  ) {
     const review = await this.reviewModel.findById(reviewId);
-    
+
     if (!review) {
       throw new NotFoundException('Review not found');
     }
@@ -184,10 +214,12 @@ export class ReviewsService {
     // Update fields
     if (updateReviewDto.rating) review.rating = updateReviewDto.rating;
     if (updateReviewDto.comment) review.comment = updateReviewDto.comment;
-    if (updateReviewDto.criteria) review.criteria = { ...review.criteria, ...updateReviewDto.criteria };
+    if (updateReviewDto.criteria)
+      review.criteria = { ...review.criteria, ...updateReviewDto.criteria };
     if (updateReviewDto.tags) review.tags = updateReviewDto.tags;
-    if (typeof updateReviewDto.isPublic === 'boolean') review.isPublic = updateReviewDto.isPublic;
-    
+    if (typeof updateReviewDto.isPublic === 'boolean')
+      review.isPublic = updateReviewDto.isPublic;
+
     review.editedAt = new Date();
     await review.save();
 
@@ -201,7 +233,7 @@ export class ReviewsService {
 
   async deleteReview(userId: string, reviewId: string) {
     const review = await this.reviewModel.findById(reviewId);
-    
+
     if (!review) {
       throw new NotFoundException('Review not found');
     }
@@ -218,15 +250,21 @@ export class ReviewsService {
     return { message: 'Review deleted successfully' };
   }
 
-  async addReviewResponse(userId: string, reviewId: string, responseDto: ReviewResponseDto) {
+  async addReviewResponse(
+    userId: string,
+    reviewId: string,
+    responseDto: ReviewResponseDto,
+  ) {
     const review = await this.reviewModel.findById(reviewId);
-    
+
     if (!review) {
       throw new NotFoundException('Review not found');
     }
 
     if (review.revieweeId.toString() !== userId) {
-      throw new ForbiddenException('You can only respond to reviews about yourself');
+      throw new ForbiddenException(
+        'You can only respond to reviews about yourself',
+      );
     }
 
     if (review.response) {
@@ -235,26 +273,34 @@ export class ReviewsService {
 
     review.response = {
       comment: responseDto.comment,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     await review.save();
     return this.populateReview(review);
   }
 
-  async updateReviewResponse(userId: string, reviewId: string, responseDto: ReviewResponseDto) {
+  async updateReviewResponse(
+    userId: string,
+    reviewId: string,
+    responseDto: ReviewResponseDto,
+  ) {
     const review = await this.reviewModel.findById(reviewId);
-    
+
     if (!review) {
       throw new NotFoundException('Review not found');
     }
 
     if (review.revieweeId.toString() !== userId) {
-      throw new ForbiddenException('You can only update responses to reviews about yourself');
+      throw new ForbiddenException(
+        'You can only update responses to reviews about yourself',
+      );
     }
 
     if (!review.response) {
-      throw new BadRequestException('Review does not have a response to update');
+      throw new BadRequestException(
+        'Review does not have a response to update',
+      );
     }
 
     review.response.comment = responseDto.comment;
@@ -266,7 +312,7 @@ export class ReviewsService {
 
   async voteHelpful(userId: string, reviewId: string) {
     const review = await this.reviewModel.findById(reviewId);
-    
+
     if (!review) {
       throw new NotFoundException('Review not found');
     }
@@ -277,7 +323,7 @@ export class ReviewsService {
     if (hasVoted) {
       // Remove vote
       review.helpfulVoters = review.helpfulVoters.filter(
-        voterId => !voterId.equals(userObjectId)
+        (voterId) => !voterId.equals(userObjectId),
       );
       review.helpfulVotes = Math.max(0, review.helpfulVotes - 1);
     } else {
@@ -287,23 +333,27 @@ export class ReviewsService {
     }
 
     await review.save();
-    return { 
+    return {
       message: hasVoted ? 'Vote removed' : 'Vote added',
       helpfulVotes: review.helpfulVotes,
-      hasVoted: !hasVoted
+      hasVoted: !hasVoted,
     };
   }
 
-  async reportReview(userId: string, reviewId: string, reportDto: ReportReviewDto) {
+  async reportReview(
+    userId: string,
+    reviewId: string,
+    reportDto: ReportReviewDto,
+  ) {
     const review = await this.reviewModel.findById(reviewId);
-    
+
     if (!review) {
       throw new NotFoundException('Review not found');
     }
 
     // Check if user already reported this review
-    const existingReport = review.reports.find(
-      report => report.userId.equals(new Types.ObjectId(userId))
+    const existingReport = review.reports.find((report) =>
+      report.userId.equals(new Types.ObjectId(userId)),
     );
 
     if (existingReport) {
@@ -314,7 +364,7 @@ export class ReviewsService {
       userId: new Types.ObjectId(userId),
       reason: reportDto.reason,
       comment: reportDto.comment,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     review.reportCount += 1;
@@ -330,11 +380,11 @@ export class ReviewsService {
 
   async getUserRatingStats(userId: string) {
     const stats = await this.reviewModel.aggregate([
-      { 
-        $match: { 
+      {
+        $match: {
           revieweeId: new Types.ObjectId(userId),
-          status: 'active'
-        } 
+          status: 'active',
+        },
       },
       {
         $group: {
@@ -342,16 +392,16 @@ export class ReviewsService {
           totalReviews: { $sum: 1 },
           averageRating: { $avg: '$rating' },
           ratingDistribution: {
-            $push: '$rating'
+            $push: '$rating',
           },
           byType: {
             $push: {
               type: '$reviewType',
-              rating: '$rating'
-            }
-          }
-        }
-      }
+              rating: '$rating',
+            },
+          },
+        },
+      },
     ]);
 
     if (stats.length === 0) {
@@ -360,11 +410,12 @@ export class ReviewsService {
         averageRating: 0,
         ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
         clientReviews: { total: 0, average: 0 },
-        freelancerReviews: { total: 0, average: 0 }
+        freelancerReviews: { total: 0, average: 0 },
       };
     }
 
-    const { totalReviews, averageRating, ratingDistribution, byType } = stats[0];
+    const { totalReviews, averageRating, ratingDistribution, byType } =
+      stats[0];
 
     // Calculate rating distribution
     const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -373,8 +424,12 @@ export class ReviewsService {
     });
 
     // Calculate reviews by type
-    const clientReviews = byType.filter((item: any) => item.type === 'client_to_freelancer');
-    const freelancerReviews = byType.filter((item: any) => item.type === 'freelancer_to_client');
+    const clientReviews = byType.filter(
+      (item: any) => item.type === 'client_to_freelancer',
+    );
+    const freelancerReviews = byType.filter(
+      (item: any) => item.type === 'freelancer_to_client',
+    );
 
     return {
       totalReviews,
@@ -382,53 +437,81 @@ export class ReviewsService {
       ratingDistribution: distribution,
       clientReviews: {
         total: clientReviews.length,
-        average: clientReviews.length > 0 
-          ? Math.round((clientReviews.reduce((sum: number, item: any) => sum + item.rating, 0) / clientReviews.length) * 10) / 10
-          : 0
+        average:
+          clientReviews.length > 0
+            ? Math.round(
+                (clientReviews.reduce(
+                  (sum: number, item: any) => sum + item.rating,
+                  0,
+                ) /
+                  clientReviews.length) *
+                  10,
+              ) / 10
+            : 0,
       },
       freelancerReviews: {
         total: freelancerReviews.length,
-        average: freelancerReviews.length > 0 
-          ? Math.round((freelancerReviews.reduce((sum: number, item: any) => sum + item.rating, 0) / freelancerReviews.length) * 10) / 10
-          : 0
-      }
+        average:
+          freelancerReviews.length > 0
+            ? Math.round(
+                (freelancerReviews.reduce(
+                  (sum: number, item: any) => sum + item.rating,
+                  0,
+                ) /
+                  freelancerReviews.length) *
+                  10,
+              ) / 10
+            : 0,
+      },
     };
   }
 
   async getFeaturedReviews(limit: number = 10) {
     const reviews = await this.reviewModel
-      .find({ 
-        isFeatured: true, 
-        isPublic: true, 
-        status: 'active' 
+      .find({
+        isFeatured: true,
+        isPublic: true,
+        status: 'active',
       })
       .sort({ helpfulVotes: -1, createdAt: -1 })
       .limit(limit)
-      .populate('reviewerId', 'username profile.firstName profile.lastName profile.avatar')
-      .populate('revieweeId', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'reviewerId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
+      .populate(
+        'revieweeId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('projectId', 'title category')
       .exec();
 
     return reviews;
   }
 
-  async getTopRatedUsers(userType: 'freelancer' | 'client' = 'freelancer', limit: number = 10) {
-    const reviewType = userType === 'freelancer' ? 'client_to_freelancer' : 'freelancer_to_client';
+  async getTopRatedUsers(
+    userType: 'freelancer' | 'client' = 'freelancer',
+    limit: number = 10,
+  ) {
+    const reviewType =
+      userType === 'freelancer'
+        ? 'client_to_freelancer'
+        : 'freelancer_to_client';
 
     const topUsers = await this.reviewModel.aggregate([
-      { 
-        $match: { 
+      {
+        $match: {
           reviewType,
           status: 'active',
-          isPublic: true
-        } 
+          isPublic: true,
+        },
       },
       {
         $group: {
           _id: '$revieweeId',
           averageRating: { $avg: '$rating' },
-          totalReviews: { $sum: 1 }
-        }
+          totalReviews: { $sum: 1 },
+        },
       },
       { $match: { totalReviews: { $gte: 3 } } }, // Minimum 3 reviews
       { $sort: { averageRating: -1, totalReviews: -1 } },
@@ -438,8 +521,8 @@ export class ReviewsService {
           from: 'users',
           localField: '_id',
           foreignField: '_id',
-          as: 'user'
-        }
+          as: 'user',
+        },
       },
       { $unwind: '$user' },
       {
@@ -448,9 +531,9 @@ export class ReviewsService {
           averageRating: { $round: ['$averageRating', 1] },
           totalReviews: 1,
           username: '$user.username',
-          profile: '$user.profile'
-        }
-      }
+          profile: '$user.profile',
+        },
+      },
     ]);
 
     return topUsers;
@@ -458,42 +541,52 @@ export class ReviewsService {
 
   // Private helper methods
   private async verifyReviewPermission(
-    reviewerId: string, 
-    revieweeId: string, 
-    projectId: string, 
-    reviewType: string
+    reviewerId: string,
+    revieweeId: string,
+    projectId: string,
+    reviewType: string,
   ): Promise<boolean> {
     const project = await this.projectModel.findById(projectId);
-    
+
     if (!project) return false;
 
     if (reviewType === 'client_to_freelancer') {
       // Client reviewing freelancer
-      return project.clientId.toString() === reviewerId && 
-             project.selectedFreelancer?.toString() === revieweeId;
+      return (
+        project.clientId.toString() === reviewerId &&
+        project.selectedFreelancer?.toString() === revieweeId
+      );
     } else {
       // Freelancer reviewing client
-      return project.selectedFreelancer?.toString() === reviewerId && 
-             project.clientId.toString() === revieweeId;
+      return (
+        project.selectedFreelancer?.toString() === reviewerId &&
+        project.clientId.toString() === revieweeId
+      );
     }
   }
 
   private async updateUserRatingStats(userId: string) {
     const stats = await this.getUserRatingStats(userId);
-    
+
     // Update user document with cached rating stats
     await this.userModel.findByIdAndUpdate(userId, {
       'ratingStats.totalReviews': stats.totalReviews,
       'ratingStats.averageRating': stats.averageRating,
-      'ratingStats.lastUpdated': new Date()
+      'ratingStats.lastUpdated': new Date(),
     });
   }
 
   private populateReview(review: any) {
     return this.reviewModel
       .findById(review._id)
-      .populate('reviewerId', 'username profile.firstName profile.lastName profile.avatar')
-      .populate('revieweeId', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'reviewerId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
+      .populate(
+        'revieweeId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('projectId', 'title category status')
       .exec();
   }

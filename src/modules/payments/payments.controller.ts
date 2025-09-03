@@ -13,7 +13,12 @@ import {
   Req,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
@@ -44,7 +49,10 @@ export class PaymentsController {
   @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create payment intent for contract payment' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Payment intent created successfully' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Payment intent created successfully',
+  })
   async createPaymentIntent(
     @Body(ValidationPipe) createPaymentDto: CreatePaymentIntentDto,
     @Request() req: any,
@@ -58,7 +66,10 @@ export class PaymentsController {
 
   @Post('confirm/:paymentIntentId')
   @ApiOperation({ summary: 'Confirm payment completion' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Payment confirmed successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Payment confirmed successfully',
+  })
   async confirmPayment(@Param('paymentIntentId') paymentIntentId: string) {
     return this.paymentsService.confirmPayment(paymentIntentId);
   }
@@ -68,7 +79,10 @@ export class PaymentsController {
   @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create escrow payment' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Escrow payment created successfully' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Escrow payment created successfully',
+  })
   async createEscrowPayment(
     @Body(ValidationPipe) escrowPaymentDto: CreateEscrowPaymentDto,
     @Request() req: any,
@@ -86,7 +100,10 @@ export class PaymentsController {
   @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Release escrow payment to freelancer' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Escrow payment released successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Escrow payment released successfully',
+  })
   async releaseEscrowPayment(
     @Param('paymentId') paymentId: string,
     @Request() req: any,
@@ -99,20 +116,30 @@ export class PaymentsController {
   @Role('client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Refund a payment' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Payment refunded successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Payment refunded successfully',
+  })
   async refundPayment(
     @Param('paymentId') paymentId: string,
     @Body(ValidationPipe) refundDto: RefundPaymentDto,
     @Request() req: any,
   ) {
-    return this.paymentsService.refundPayment(paymentId, refundDto.reason, req.user.id);
+    return this.paymentsService.refundPayment(
+      paymentId,
+      refundDto.reason,
+      req.user.id,
+    );
   }
 
   @Get('contract/:contractId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get payment history for a contract' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Payment history retrieved successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Payment history retrieved successfully',
+  })
   async getPaymentHistory(
     @Param('contractId') contractId: string,
     @Request() req: any,
@@ -124,7 +151,10 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user payments (client or freelancer)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'User payments retrieved successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User payments retrieved successfully',
+  })
   async getUserPayments(@Request() req: any) {
     const role = req.user.roles.includes('client') ? 'client' : 'freelancer';
     return this.paymentsService.getUserPayments(req.user.id, role);
@@ -135,7 +165,10 @@ export class PaymentsController {
   @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create Stripe connected account for freelancer' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Connected account created successfully' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Connected account created successfully',
+  })
   async createConnectedAccount(@Request() req: any) {
     return this.paymentsService.createConnectedAccount(req.user.id);
   }
@@ -145,14 +178,20 @@ export class PaymentsController {
   @Role('freelancer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get Stripe account status' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Account status retrieved successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Account status retrieved successfully',
+  })
   async getAccountStatus(@Request() req: any) {
     return this.paymentsService.getAccountStatus(req.user.id);
   }
 
   @Post('webhook')
   @ApiOperation({ summary: 'Handle Stripe webhooks' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Webhook processed successfully' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Webhook processed successfully',
+  })
   async handleWebhook(
     @Headers('stripe-signature') signature: string,
     @Req() req: RawBodyRequest<Request>,

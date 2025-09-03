@@ -16,7 +16,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import { extname, join } from 'path';
 import * as fs from 'fs';
@@ -35,9 +41,7 @@ export class UploadsController {
   @ApiOperation({ summary: 'Upload a single file' })
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'File uploaded successfully' })
-  @UseInterceptors(
-  FileInterceptor('file'),
-  )
+  @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadDto: FileUploadDto,
@@ -72,9 +76,7 @@ export class UploadsController {
   @ApiOperation({ summary: 'Upload multiple files' })
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Files uploaded successfully' })
-  @UseInterceptors(
-  FilesInterceptor('files', 10),
-  )
+  @UseInterceptors(FilesInterceptor('files', 10))
   async uploadMultipleFiles(
     @UploadedFiles() files: Express.Multer.File[],
     @Body() uploadDto: FileUploadDto,
@@ -108,10 +110,7 @@ export class UploadsController {
   @Get()
   @ApiOperation({ summary: 'Get user files with optional filters' })
   @ApiResponse({ status: 200, description: 'Files retrieved successfully' })
-  async getFiles(
-    @Query() filters: FileFilterDto,
-    @Request() req: any,
-  ) {
+  async getFiles(@Query() filters: FileFilterDto, @Request() req: any) {
     const files = await this.uploadsService.getFiles(req.user.sub, filters);
 
     return {
@@ -135,7 +134,10 @@ export class UploadsController {
 
   @Get('project/:projectId')
   @ApiOperation({ summary: 'Get files for a specific project' })
-  @ApiResponse({ status: 200, description: 'Project files retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Project files retrieved successfully',
+  })
   async getProjectFiles(@Param('projectId') projectId: string) {
     const files = await this.uploadsService.getFilesByProject(projectId);
 
@@ -157,7 +159,10 @@ export class UploadsController {
 
   @Get('message/:messageId')
   @ApiOperation({ summary: 'Get files for a specific message' })
-  @ApiResponse({ status: 200, description: 'Message files retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Message files retrieved successfully',
+  })
   async getMessageFiles(@Param('messageId') messageId: string) {
     const files = await this.uploadsService.getFilesByMessage(messageId);
 
@@ -192,11 +197,11 @@ export class UploadsController {
 
   @Get(':fileId')
   @ApiOperation({ summary: 'Get file details by ID' })
-  @ApiResponse({ status: 200, description: 'File details retrieved successfully' })
-  async getFileById(
-    @Param('fileId') fileId: string,
-    @Request() req: any,
-  ) {
+  @ApiResponse({
+    status: 200,
+    description: 'File details retrieved successfully',
+  })
+  async getFileById(@Param('fileId') fileId: string, @Request() req: any) {
     const file = await this.uploadsService.getFileById(fileId, req.user.sub);
 
     return {
@@ -220,10 +225,7 @@ export class UploadsController {
   @Delete(':fileId')
   @ApiOperation({ summary: 'Delete a file' })
   @ApiResponse({ status: 200, description: 'File deleted successfully' })
-  async deleteFile(
-    @Param('fileId') fileId: string,
-    @Request() req: any,
-  ) {
+  async deleteFile(@Param('fileId') fileId: string, @Request() req: any) {
     await this.uploadsService.deleteFile(fileId, req.user.sub);
 
     return {

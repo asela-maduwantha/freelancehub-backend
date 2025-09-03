@@ -22,15 +22,43 @@ export class Professional {
     type: {
       timezone: { type: String, required: true },
       schedule: {
-        monday: { start: String, end: String, available: { type: Boolean, default: true } },
-        tuesday: { start: String, end: String, available: { type: Boolean, default: true } },
-        wednesday: { start: String, end: String, available: { type: Boolean, default: true } },
-        thursday: { start: String, end: String, available: { type: Boolean, default: true } },
-        friday: { start: String, end: String, available: { type: Boolean, default: true } },
-        saturday: { start: String, end: String, available: { type: Boolean, default: false } },
-        sunday: { start: String, end: String, available: { type: Boolean, default: false } }
-      }
-    }
+        monday: {
+          start: String,
+          end: String,
+          available: { type: Boolean, default: true },
+        },
+        tuesday: {
+          start: String,
+          end: String,
+          available: { type: Boolean, default: true },
+        },
+        wednesday: {
+          start: String,
+          end: String,
+          available: { type: Boolean, default: true },
+        },
+        thursday: {
+          start: String,
+          end: String,
+          available: { type: Boolean, default: true },
+        },
+        friday: {
+          start: String,
+          end: String,
+          available: { type: Boolean, default: true },
+        },
+        saturday: {
+          start: String,
+          end: String,
+          available: { type: Boolean, default: false },
+        },
+        sunday: {
+          start: String,
+          end: String,
+          available: { type: Boolean, default: false },
+        },
+      },
+    },
   })
   workingHours: {
     timezone: string;
@@ -46,7 +74,14 @@ export class Professional {
 
 @Schema({ _id: false })
 export class Skills {
-  @Prop({ type: [String], required: true, validate: [(val: string[]) => val.length > 0, 'At least one primary skill required'] })
+  @Prop({
+    type: [String],
+    required: true,
+    validate: [
+      (val: string[]) => val.length > 0,
+      'At least one primary skill required',
+    ],
+  })
   primary: string[];
 
   @Prop({ type: [String] })
@@ -56,11 +91,17 @@ export class Skills {
   categories: string[];
 
   @Prop({
-    type: [{
-      name: { type: String, required: true },
-      level: { type: String, enum: ['beginner', 'intermediate', 'advanced', 'expert'], required: true },
-      yearsOfExperience: { type: Number, min: 0, max: 50 }
-    }]
+    type: [
+      {
+        name: { type: String, required: true },
+        level: {
+          type: String,
+          enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+          required: true,
+        },
+        yearsOfExperience: { type: Number, min: 0, max: 50 },
+      },
+    ],
   })
   detailed: {
     name: string;
@@ -105,8 +146,8 @@ export class Pricing {
     type: {
       min: { type: Number, min: 1, max: 10000 },
       max: { type: Number, min: 1, max: 10000 },
-      currency: { type: String, default: 'USD', enum: ['USD', 'LKR'] }
-    }
+      currency: { type: String, default: 'USD', enum: ['USD', 'LKR'] },
+    },
   })
   hourlyRate?: {
     min: number;
@@ -115,14 +156,16 @@ export class Pricing {
   };
 
   @Prop({
-    type: [{
-      title: { type: String, required: true, maxlength: 100 },
-      description: { type: String, required: true, maxlength: 500 },
-      price: { type: Number, required: true, min: 1 },
-      deliveryDays: { type: Number, required: true, min: 1, max: 365 },
-      revisions: { type: Number, min: 0, max: 10 },
-      features: [String]
-    }]
+    type: [
+      {
+        title: { type: String, required: true, maxlength: 100 },
+        description: { type: String, required: true, maxlength: 500 },
+        price: { type: Number, required: true, min: 1 },
+        deliveryDays: { type: Number, required: true, min: 1, max: 365 },
+        revisions: { type: Number, min: 0, max: 10 },
+        features: [String],
+      },
+    ],
   })
   fixedPricePackages?: {
     title: string;
@@ -187,7 +230,10 @@ export class Language {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ enum: ['native', 'fluent', 'conversational', 'basic'], required: true })
+  @Prop({
+    enum: ['native', 'fluent', 'conversational', 'basic'],
+    required: true,
+  })
   proficiency: string;
 }
 
@@ -285,56 +331,67 @@ export class FreelancerProfile {
   isActive: boolean;
 }
 
-export const FreelancerProfileSchema = SchemaFactory.createForClass(FreelancerProfile);
+export const FreelancerProfileSchema =
+  SchemaFactory.createForClass(FreelancerProfile);
 
-
-FreelancerProfileSchema.index({ 'skills.primary': 1, 'professional.availability': 1 });
+FreelancerProfileSchema.index({
+  'skills.primary': 1,
+  'professional.availability': 1,
+});
 FreelancerProfileSchema.index({ 'skills.categories': 1 });
-FreelancerProfileSchema.index({ 'stats.averageRating': -1, 'stats.totalReviews': -1 });
-FreelancerProfileSchema.index({ 'visibility.searchable': 1, 'professional.availability': 1 });
+FreelancerProfileSchema.index({
+  'stats.averageRating': -1,
+  'stats.totalReviews': -1,
+});
+FreelancerProfileSchema.index({
+  'visibility.searchable': 1,
+  'professional.availability': 1,
+});
 FreelancerProfileSchema.index({ isActive: 1, 'professional.availability': 1 });
 
 // Pre-save middleware to calculate completion percentage
-FreelancerProfileSchema.pre('save', function(next) {
+FreelancerProfileSchema.pre('save', function (next) {
   const requiredFields = [
     'professional.title',
     'professional.description',
     'skills.primary',
     'skills.categories',
-    'languages'
+    'languages',
   ];
-  
+
   const optionalFields = [
     'portfolio',
     'pricing',
     'education',
-    'certifications'
+    'certifications',
   ];
-  
+
   let completedRequired = 0;
   let completedOptional = 0;
-  
+
   // Check required fields
-  requiredFields.forEach(field => {
+  requiredFields.forEach((field) => {
     const value = field.split('.').reduce((obj, key) => obj?.[key], this);
     if (value && (Array.isArray(value) ? value.length > 0 : true)) {
       completedRequired++;
     }
   });
-  
+
   // Check optional fields
-  optionalFields.forEach(field => {
+  optionalFields.forEach((field) => {
     const value = field.split('.').reduce((obj, key) => obj?.[key], this);
     if (value && (Array.isArray(value) ? value.length > 0 : true)) {
       completedOptional++;
     }
   });
-  
+
   // Calculate percentage (70% for required, 30% for optional)
   const requiredPercentage = (completedRequired / requiredFields.length) * 70;
   const optionalPercentage = (completedOptional / optionalFields.length) * 30;
-  
-  this.completionPercentage = Math.round(requiredPercentage + optionalPercentage);
-  
+
+  this.completionPercentage = Math.round(
+    requiredPercentage + optionalPercentage,
+  );
+
   next();
 });

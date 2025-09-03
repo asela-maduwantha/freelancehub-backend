@@ -1,35 +1,43 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Notification } from './schemas/notification.schema';
 import { User } from '../schemas/user.schema';
-import { 
-  CreateNotificationDto, 
-  UpdateNotificationDto, 
+import {
+  CreateNotificationDto,
+  UpdateNotificationDto,
   NotificationQueryDto,
-  NotificationPreferencesDto 
+  NotificationPreferencesDto,
 } from './dto/notifications.dto';
 
 @Injectable()
 export class NotificationsService {
   constructor(
-    @InjectModel(Notification.name) private notificationModel: Model<Notification>,
+    @InjectModel(Notification.name)
+    private notificationModel: Model<Notification>,
     @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
-  async createNotification(userId: string, createNotificationDto: CreateNotificationDto) {
-    const { 
-      title, 
-      message, 
-      type, 
-      priority = 'medium', 
-      data, 
-      actionUrl, 
-      actionText, 
-      expiresAt, 
-      channels = ['in_app'], 
+  async createNotification(
+    userId: string,
+    createNotificationDto: CreateNotificationDto,
+  ) {
+    const {
+      title,
+      message,
+      type,
+      priority = 'medium',
+      data,
+      actionUrl,
+      actionText,
+      expiresAt,
+      channels = ['in_app'],
       category,
-      metadata 
+      metadata,
     } = createNotificationDto;
 
     // Validate user exists
@@ -40,7 +48,11 @@ export class NotificationsService {
 
     // Check user notification preferences
     const userPreferences = (user as any).notificationPreferences || {};
-    const allowedChannels = this.filterChannelsByPreferences(channels, userPreferences, type);
+    const allowedChannels = this.filterChannelsByPreferences(
+      channels,
+      userPreferences,
+      type,
+    );
 
     if (allowedChannels.length === 0) {
       // User has disabled all channels for this notification type
@@ -60,10 +72,13 @@ export class NotificationsService {
       channels: allowedChannels,
       category,
       metadata,
-      deliveryStatus: allowedChannels.reduce((acc, channel) => ({
-        ...acc,
-        [channel]: { sent: false }
-      }), {})
+      deliveryStatus: allowedChannels.reduce(
+        (acc, channel) => ({
+          ...acc,
+          [channel]: { sent: false },
+        }),
+        {},
+      ),
     });
 
     const savedNotification = await notification.save();
@@ -78,12 +93,12 @@ export class NotificationsService {
     const { page = 1, limit = 20, type, priority, isRead, category } = query;
     const skip = (page - 1) * limit;
 
-    const filter: any = { 
+    const filter: any = {
       userId: new Types.ObjectId(userId),
       $or: [
         { expiresAt: { $exists: false } },
-        { expiresAt: { $gt: new Date() } }
-      ]
+        { expiresAt: { $gt: new Date() } },
+      ],
     };
 
     if (type) filter.type = type;
@@ -106,15 +121,15 @@ export class NotificationsService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
   async markAsRead(userId: string, notificationId: string) {
     const notification = await this.notificationModel.findOne({
       _id: notificationId,
-      userId: new Types.ObjectId(userId)
+      userId: new Types.ObjectId(userId),
     });
 
     if (!notification) {
@@ -130,30 +145,30 @@ export class NotificationsService {
 
   async markAllAsRead(userId: string) {
     const result = await this.notificationModel.updateMany(
-      { 
-        userId: new Types.ObjectId(userId), 
+      {
+        userId: new Types.ObjectId(userId),
         isRead: false,
         $or: [
           { expiresAt: { $exists: false } },
-          { expiresAt: { $gt: new Date() } }
-        ]
+          { expiresAt: { $gt: new Date() } },
+        ],
       },
-      { 
-        isRead: true, 
-        readAt: new Date() 
-      }
+      {
+        isRead: true,
+        readAt: new Date(),
+      },
     );
 
-    return { 
+    return {
       message: `Marked ${result.modifiedCount} notifications as read`,
-      modifiedCount: result.modifiedCount 
+      modifiedCount: result.modifiedCount,
     };
   }
 
   async deleteNotification(userId: string, notificationId: string) {
     const result = await this.notificationModel.deleteOne({
       _id: notificationId,
-      userId: new Types.ObjectId(userId)
+      userId: new Types.ObjectId(userId),
     });
 
     if (result.deletedCount === 0) {
@@ -169,22 +184,26 @@ export class NotificationsService {
       isRead: false,
       $or: [
         { expiresAt: { $exists: false } },
-        { expiresAt: { $gt: new Date() } }
-      ]
+        { expiresAt: { $gt: new Date() } },
+      ],
     });
 
     return { unreadCount: count };
   }
 
-  async getNotificationsByType(userId: string, type: string, limit: number = 10) {
+  async getNotificationsByType(
+    userId: string,
+    type: string,
+    limit: number = 10,
+  ) {
     const notifications = await this.notificationModel
       .find({
         userId: new Types.ObjectId(userId),
         type,
         $or: [
           { expiresAt: { $exists: false } },
-          { expiresAt: { $gt: new Date() } }
-        ]
+          { expiresAt: { $gt: new Date() } },
+        ],
       })
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -193,7 +212,10 @@ export class NotificationsService {
     return notifications;
   }
 
-  async updateNotificationPreferences(userId: string, preferences: NotificationPreferencesDto) {
+  async updateNotificationPreferences(
+    userId: string,
+    preferences: NotificationPreferencesDto,
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -201,16 +223,16 @@ export class NotificationsService {
 
     const updatedPreferences = {
       ...(user as any).notificationPreferences,
-      ...preferences
+      ...preferences,
     };
 
     await this.userModel.findByIdAndUpdate(userId, {
-      notificationPreferences: updatedPreferences
+      notificationPreferences: updatedPreferences,
     });
 
-    return { 
+    return {
       message: 'Notification preferences updated successfully',
-      preferences: updatedPreferences 
+      preferences: updatedPreferences,
     };
   }
 
@@ -220,26 +242,35 @@ export class NotificationsService {
       throw new NotFoundException('User not found');
     }
 
-    return (user as any).notificationPreferences || {
-      email: true,
-      push: true,
-      sms: false,
-      inApp: true,
-      disabledTypes: []
-    };
+    return (
+      (user as any).notificationPreferences || {
+        email: true,
+        push: true,
+        sms: false,
+        inApp: true,
+        disabledTypes: [],
+      }
+    );
   }
 
-  async createBulkNotifications(userIds: string[], createNotificationDto: CreateNotificationDto) {
-    const notifications = userIds.map(userId => ({
+  async createBulkNotifications(
+    userIds: string[],
+    createNotificationDto: CreateNotificationDto,
+  ) {
+    const notifications = userIds.map((userId) => ({
       ...createNotificationDto,
       userId: new Types.ObjectId(userId),
-      deliveryStatus: (createNotificationDto.channels || ['in_app']).reduce((acc, channel) => ({
-        ...acc,
-        [channel]: { sent: false }
-      }), {})
+      deliveryStatus: (createNotificationDto.channels || ['in_app']).reduce(
+        (acc, channel) => ({
+          ...acc,
+          [channel]: { sent: false },
+        }),
+        {},
+      ),
     }));
 
-    const savedNotifications = await this.notificationModel.insertMany(notifications);
+    const savedNotifications =
+      await this.notificationModel.insertMany(notifications);
 
     // Trigger delivery for all notifications
     for (const notification of savedNotifications) {
@@ -248,7 +279,7 @@ export class NotificationsService {
 
     return {
       message: `Created ${savedNotifications.length} notifications`,
-      count: savedNotifications.length
+      count: savedNotifications.length,
     };
   }
 
@@ -264,11 +295,11 @@ export class NotificationsService {
             $push: {
               type: '$type',
               priority: '$priority',
-              isRead: '$isRead'
-            }
-          }
-        }
-      }
+              isRead: '$isRead',
+            },
+          },
+        },
+      },
     ]);
 
     if (stats.length === 0) {
@@ -276,7 +307,7 @@ export class NotificationsService {
         total: 0,
         unread: 0,
         byType: {},
-        byPriority: {}
+        byPriority: {},
       };
     }
 
@@ -304,17 +335,17 @@ export class NotificationsService {
       total,
       unread,
       byType: typeStats,
-      byPriority: priorityStats
+      byPriority: priorityStats,
     };
   }
 
   // Helper method to send system notifications
   async sendSystemNotification(
-    userId: string, 
-    title: string, 
-    message: string, 
+    userId: string,
+    title: string,
+    message: string,
     type: string = 'system_update',
-    data?: any
+    data?: any,
   ) {
     return this.createNotification(userId, {
       title,
@@ -322,7 +353,7 @@ export class NotificationsService {
       type,
       priority: 'medium',
       data,
-      channels: ['in_app', 'email']
+      channels: ['in_app', 'email'],
     });
   }
 
@@ -332,15 +363,17 @@ export class NotificationsService {
     type: 'payment_received' | 'payment_released',
     amount: number,
     currency: string = 'USD',
-    projectTitle?: string
+    projectTitle?: string,
   ) {
-    const title = type === 'payment_received' 
-      ? '💰 Payment Received' 
-      : '🎉 Payment Released';
-      
-    const message = type === 'payment_received'
-      ? `You received a payment of ${currency} ${amount}${projectTitle ? ` for "${projectTitle}"` : ''}`
-      : `Payment of ${currency} ${amount} has been released${projectTitle ? ` for "${projectTitle}"` : ''}`;
+    const title =
+      type === 'payment_received'
+        ? '💰 Payment Received'
+        : '🎉 Payment Released';
+
+    const message =
+      type === 'payment_received'
+        ? `You received a payment of ${currency} ${amount}${projectTitle ? ` for "${projectTitle}"` : ''}`
+        : `Payment of ${currency} ${amount} has been released${projectTitle ? ` for "${projectTitle}"` : ''}`;
 
     return this.createNotification(userId, {
       title,
@@ -348,23 +381,23 @@ export class NotificationsService {
       type,
       priority: 'high',
       data: { amount, currency, projectTitle },
-      channels: ['in_app', 'email', 'push']
+      channels: ['in_app', 'email', 'push'],
     });
   }
 
   // Private helper methods
   private filterChannelsByPreferences(
-    channels: string[], 
-    preferences: any, 
-    type: string
+    channels: string[],
+    preferences: any,
+    type: string,
   ): string[] {
     const disabledTypes = preferences.disabledTypes || [];
-    
+
     if (disabledTypes.includes(type)) {
       return [];
     }
 
-    return channels.filter(channel => {
+    return channels.filter((channel) => {
       switch (channel) {
         case 'email':
           return preferences.email !== false;
@@ -407,12 +440,12 @@ export class NotificationsService {
         // Update delivery status
         notification.deliveryStatus[channel] = {
           sent: true,
-          sentAt: new Date()
+          sentAt: new Date(),
         };
       } catch (error) {
         notification.deliveryStatus[channel] = {
           sent: false,
-          error: error.message
+          error: error.message,
         };
       }
     }

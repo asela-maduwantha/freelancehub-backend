@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Contract, ContractDocument } from '../../schemas/contract.schema';
@@ -26,8 +31,12 @@ export class ContractsService {
   ) {}
 
   // Create a new contract from an accepted proposal
-  async createContract(createContractDto: CreateContractDto, clientId: string): Promise<Contract> {
-    const { projectId, freelancerId, proposalId, terms, milestones } = createContractDto;
+  async createContract(
+    createContractDto: CreateContractDto,
+    clientId: string,
+  ): Promise<Contract> {
+    const { projectId, freelancerId, proposalId, terms, milestones } =
+      createContractDto;
 
     // Validate project exists and belongs to client
     const project = await this.projectModel.findById(projectId);
@@ -35,7 +44,9 @@ export class ContractsService {
       throw new NotFoundException('Project not found');
     }
     if (project.clientId.toString() !== clientId) {
-      throw new ForbiddenException('You can only create contracts for your own projects');
+      throw new ForbiddenException(
+        'You can only create contracts for your own projects',
+      );
     }
 
     // Validate proposal exists and is accepted
@@ -44,7 +55,9 @@ export class ContractsService {
       throw new NotFoundException('Proposal not found');
     }
     if (proposal.status !== 'accepted') {
-      throw new BadRequestException('Can only create contracts from accepted proposals');
+      throw new BadRequestException(
+        'Can only create contracts from accepted proposals',
+      );
     }
 
     // Validate freelancer exists
@@ -60,9 +73,14 @@ export class ContractsService {
     }
 
     // Validate milestone amounts sum to total amount
-    const milestoneTotal = milestones.reduce((sum, milestone) => sum + milestone.amount, 0);
+    const milestoneTotal = milestones.reduce(
+      (sum, milestone) => sum + milestone.amount,
+      0,
+    );
     if (Math.abs(milestoneTotal - terms.totalAmount) > 0.01) {
-      throw new BadRequestException('Milestone amounts must sum to total contract amount');
+      throw new BadRequestException(
+        'Milestone amounts must sum to total contract amount',
+      );
     }
 
     // Create contract
@@ -90,7 +108,12 @@ export class ContractsService {
       contract: savedContract._id,
     });
 
-    return savedContract.populate(['projectId', 'clientId', 'freelancerId', 'proposalId']);
+    return savedContract.populate([
+      'projectId',
+      'clientId',
+      'freelancerId',
+      'proposalId',
+    ]);
   }
 
   // Get contract by ID
@@ -119,15 +142,15 @@ export class ContractsService {
     userId: string,
     searchDto: SearchContractsDto,
   ): Promise<PaginatedContractsResponseDto> {
-    const { 
-      status, 
-      category, 
-      startDate, 
-      endDate, 
-      page = 1, 
-      limit = 20, 
-      sortBy = 'createdAt', 
-      sortOrder = 'desc' 
+    const {
+      status,
+      category,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
     } = searchDto;
 
     // Build query
@@ -146,9 +169,7 @@ export class ContractsService {
     }
 
     // Build aggregation pipeline for category filtering
-    const pipeline: any[] = [
-      { $match: query },
-    ];
+    const pipeline: any[] = [{ $match: query }];
 
     if (category) {
       pipeline.push(
@@ -207,10 +228,7 @@ export class ContractsService {
     const total = totalResult[0]?.total || 0;
 
     // Add pagination
-    pipeline.push(
-      { $skip: (page - 1) * limit },
-      { $limit: limit },
-    );
+    pipeline.push({ $skip: (page - 1) * limit }, { $limit: limit });
 
     const contracts = await this.contractModel.aggregate(pipeline);
 
@@ -237,23 +255,30 @@ export class ContractsService {
 
     // Only client can update contract before it's active
     if (contract.clientId.toString() !== userId) {
-      throw new ForbiddenException('Only the client can update contract details');
+      throw new ForbiddenException(
+        'Only the client can update contract details',
+      );
     }
 
     if (contract.status !== 'draft') {
-      throw new BadRequestException('Can only update contracts in draft status');
+      throw new BadRequestException(
+        'Can only update contracts in draft status',
+      );
     }
 
     // Validate milestone amounts if milestones are being updated
     if (updateContractDto.milestones) {
-      const totalAmount = updateContractDto.terms?.totalAmount || contract.terms.totalAmount;
+      const totalAmount =
+        updateContractDto.terms?.totalAmount || contract.terms.totalAmount;
       const milestoneTotal = updateContractDto.milestones.reduce(
         (sum, milestone) => sum + milestone.amount,
         0,
       );
 
       if (Math.abs(milestoneTotal - totalAmount) > 0.01) {
-        throw new BadRequestException('Milestone amounts must sum to total contract amount');
+        throw new BadRequestException(
+          'Milestone amounts must sum to total contract amount',
+        );
       }
     }
 
@@ -269,7 +294,10 @@ export class ContractsService {
   }
 
   // Activate contract (move from draft to active)
-  async activateContract(contractId: string, userId: string): Promise<Contract> {
+  async activateContract(
+    contractId: string,
+    userId: string,
+  ): Promise<Contract> {
     const contract = await this.contractModel.findById(contractId);
 
     if (!contract) {
@@ -282,20 +310,27 @@ export class ContractsService {
     }
 
     if (contract.status !== 'draft') {
-      throw new BadRequestException('Can only activate contracts in draft status');
+      throw new BadRequestException(
+        'Can only activate contracts in draft status',
+      );
     }
 
     // Update contract status and first milestone
     contract.status = 'active';
     contract.startDate = new Date();
-    
+
     // Set first milestone to in_progress
     if (contract.milestones.length > 0) {
       contract.milestones[0].status = 'in_progress';
     }
 
     const updatedContract = await contract.save();
-    return updatedContract.populate(['projectId', 'clientId', 'freelancerId', 'proposalId']);
+    return updatedContract.populate([
+      'projectId',
+      'clientId',
+      'freelancerId',
+      'proposalId',
+    ]);
   }
 
   // Submit milestone deliverables
@@ -312,11 +347,15 @@ export class ContractsService {
     }
 
     if (contract.freelancerId.toString() !== freelancerId) {
-      throw new ForbiddenException('Only the assigned freelancer can submit milestones');
+      throw new ForbiddenException(
+        'Only the assigned freelancer can submit milestones',
+      );
     }
 
     if (contract.status !== 'active') {
-      throw new BadRequestException('Contract must be active to submit milestones');
+      throw new BadRequestException(
+        'Contract must be active to submit milestones',
+      );
     }
 
     if (milestoneIndex >= contract.milestones.length) {
@@ -339,7 +378,12 @@ export class ContractsService {
     milestone.status = 'submitted';
 
     const updatedContract = await contract.save();
-    return updatedContract.populate(['projectId', 'clientId', 'freelancerId', 'proposalId']);
+    return updatedContract.populate([
+      'projectId',
+      'clientId',
+      'freelancerId',
+      'proposalId',
+    ]);
   }
 
   // Review milestone submission
@@ -394,13 +438,18 @@ export class ContractsService {
       milestone.status = 'rejected';
       milestone.rejectedAt = new Date();
       milestone.rejectionReason = reviewDto.rejectionReason;
-      
+
       // Set back to in_progress for resubmission
       milestone.status = 'in_progress';
     }
 
     const updatedContract = await contract.save();
-    return updatedContract.populate(['projectId', 'clientId', 'freelancerId', 'proposalId']);
+    return updatedContract.populate([
+      'projectId',
+      'clientId',
+      'freelancerId',
+      'proposalId',
+    ]);
   }
 
   // Request contract modification
@@ -439,7 +488,12 @@ export class ContractsService {
     });
 
     const updatedContract = await contract.save();
-    return updatedContract.populate(['projectId', 'clientId', 'freelancerId', 'proposalId']);
+    return updatedContract.populate([
+      'projectId',
+      'clientId',
+      'freelancerId',
+      'proposalId',
+    ]);
   }
 
   // Approve/reject contract modification
@@ -465,13 +519,18 @@ export class ContractsService {
     // Check if user can approve (opposite party from requester)
     const isClient = contract.clientId.toString() === userId;
     const isFreelancer = contract.freelancerId.toString() === userId;
-    const wasRequestedByClient = modification.requestedBy.toString() === contract.clientId.toString();
+    const wasRequestedByClient =
+      modification.requestedBy.toString() === contract.clientId.toString();
 
     if (wasRequestedByClient && !isFreelancer) {
-      throw new ForbiddenException('Only the freelancer can approve client-requested modifications');
+      throw new ForbiddenException(
+        'Only the freelancer can approve client-requested modifications',
+      );
     }
     if (!wasRequestedByClient && !isClient) {
-      throw new ForbiddenException('Only the client can approve freelancer-requested modifications');
+      throw new ForbiddenException(
+        'Only the client can approve freelancer-requested modifications',
+      );
     }
 
     if (modification.status !== 'pending') {
@@ -502,7 +561,12 @@ export class ContractsService {
     }
 
     const updatedContract = await contract.save();
-    return updatedContract.populate(['projectId', 'clientId', 'freelancerId', 'proposalId']);
+    return updatedContract.populate([
+      'projectId',
+      'clientId',
+      'freelancerId',
+      'proposalId',
+    ]);
   }
 
   // Update contract status
@@ -522,7 +586,9 @@ export class ContractsService {
       contract.clientId.toString() !== userId &&
       contract.freelancerId.toString() !== userId
     ) {
-      throw new ForbiddenException('You do not have permission to update this contract');
+      throw new ForbiddenException(
+        'You do not have permission to update this contract',
+      );
     }
 
     // Validate status transitions
@@ -534,7 +600,9 @@ export class ContractsService {
     };
 
     if (!validTransitions[contract.status]?.includes(statusDto.status)) {
-      throw new BadRequestException(`Cannot change status from ${contract.status} to ${statusDto.status}`);
+      throw new BadRequestException(
+        `Cannot change status from ${contract.status} to ${statusDto.status}`,
+      );
     }
 
     // Update status and related fields
@@ -542,15 +610,24 @@ export class ContractsService {
 
     if (statusDto.status === 'completed') {
       contract.completedAt = new Date();
-      await this.projectModel.findByIdAndUpdate(contract.projectId, { status: 'completed' });
+      await this.projectModel.findByIdAndUpdate(contract.projectId, {
+        status: 'completed',
+      });
     } else if (statusDto.status === 'cancelled') {
       contract.cancelledAt = new Date();
       contract.cancellationReason = statusDto.reason;
-      await this.projectModel.findByIdAndUpdate(contract.projectId, { status: 'cancelled' });
+      await this.projectModel.findByIdAndUpdate(contract.projectId, {
+        status: 'cancelled',
+      });
     }
 
     const updatedContract = await contract.save();
-    return updatedContract.populate(['projectId', 'clientId', 'freelancerId', 'proposalId']);
+    return updatedContract.populate([
+      'projectId',
+      'clientId',
+      'freelancerId',
+      'proposalId',
+    ]);
   }
 
   // Get contract statistics
@@ -558,7 +635,10 @@ export class ContractsService {
     const stats = await this.contractModel.aggregate([
       {
         $match: {
-          $or: [{ clientId: new Types.ObjectId(userId) }, { freelancerId: new Types.ObjectId(userId) }],
+          $or: [
+            { clientId: new Types.ObjectId(userId) },
+            { freelancerId: new Types.ObjectId(userId) },
+          ],
         },
       },
       {
@@ -599,7 +679,9 @@ export class ContractsService {
     }
 
     if (contract.status !== 'draft') {
-      throw new BadRequestException('Can only delete contracts in draft status');
+      throw new BadRequestException(
+        'Can only delete contracts in draft status',
+      );
     }
 
     await this.contractModel.findByIdAndDelete(contractId);

@@ -15,10 +15,10 @@ export class Message extends Document {
   @Prop({ required: true, trim: true })
   content: string;
 
-  @Prop({ 
-    type: String, 
-    enum: ['text', 'file', 'image', 'proposal', 'contract'], 
-    default: 'text' 
+  @Prop({
+    type: String,
+    enum: ['text', 'file', 'image', 'proposal', 'contract'],
+    default: 'text',
   })
   type: string;
 

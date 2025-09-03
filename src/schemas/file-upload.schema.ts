@@ -23,7 +23,10 @@ export class FileUpload {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   uploadedBy: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['avatar', 'project_attachment', 'message_attachment', 'document'] })
+  @Prop({
+    required: true,
+    enum: ['avatar', 'project_attachment', 'message_attachment', 'document'],
+  })
   category: string;
 
   @Prop({ type: Types.ObjectId, refPath: 'onModel' })

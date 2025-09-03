@@ -1,4 +1,17 @@
-import { IsString, IsNumber, IsOptional, IsEnum, IsBoolean, IsArray, IsObject, IsMongoId, Min, Max, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsArray,
+  IsObject,
+  IsMongoId,
+  Min,
+  Max,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ReviewCriteriaDto {
@@ -63,34 +76,34 @@ export class CreateReviewDto {
   @Max(5)
   rating: number;
 
-  @ApiProperty({ 
-    description: 'Review comment', 
-    minLength: 10, 
-    maxLength: 2000 
+  @ApiProperty({
+    description: 'Review comment',
+    minLength: 10,
+    maxLength: 2000,
   })
   @IsString()
   @MinLength(10)
   @MaxLength(2000)
   comment: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Type of review',
-    enum: ['client_to_freelancer', 'freelancer_to_client']
+    enum: ['client_to_freelancer', 'freelancer_to_client'],
   })
   @IsEnum(['client_to_freelancer', 'freelancer_to_client'])
   reviewType: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Detailed criteria ratings',
-    type: ReviewCriteriaDto
+    type: ReviewCriteriaDto,
   })
   @IsOptional()
   @IsObject()
   criteria?: ReviewCriteriaDto;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Review tags',
-    type: [String]
+    type: [String],
   })
   @IsOptional()
   @IsArray()
@@ -155,7 +168,10 @@ export class ReviewResponseDto {
 }
 
 export class ReviewQueryDto {
-  @ApiPropertyOptional({ description: 'Page number for pagination', default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @IsOptional()
   page?: number = 1;
 
@@ -215,9 +231,9 @@ export class ReviewQueryDto {
 }
 
 export class ReportReviewDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Reason for reporting',
-    enum: ['inappropriate', 'spam', 'fake', 'offensive', 'other']
+    enum: ['inappropriate', 'spam', 'fake', 'offensive', 'other'],
   })
   @IsEnum(['inappropriate', 'spam', 'fake', 'offensive', 'other'])
   reason: string;

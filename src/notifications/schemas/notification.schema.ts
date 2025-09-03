@@ -12,8 +12,8 @@ export class Notification extends Document {
   @Prop({ required: true })
   message: string;
 
-  @Prop({ 
-    type: String, 
+  @Prop({
+    type: String,
     enum: [
       'project_created',
       'proposal_received',
@@ -28,16 +28,16 @@ export class Notification extends Document {
       'review_received',
       'dispute_opened',
       'system_update',
-      'security_alert'
-    ], 
-    required: true 
+      'security_alert',
+    ],
+    required: true,
   })
   type: string;
 
-  @Prop({ 
-    type: String, 
-    enum: ['low', 'medium', 'high', 'urgent'], 
-    default: 'medium' 
+  @Prop({
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    default: 'medium',
   })
   priority: string;
 
@@ -71,10 +71,10 @@ export class Notification extends Document {
   @Prop({ type: Date, required: false })
   expiresAt?: Date;
 
-  @Prop({ 
-    type: [String], 
-    enum: ['email', 'push', 'sms', 'in_app'], 
-    default: ['in_app'] 
+  @Prop({
+    type: [String],
+    enum: ['email', 'push', 'sms', 'in_app'],
+    default: ['in_app'],
   })
   channels: string[];
 

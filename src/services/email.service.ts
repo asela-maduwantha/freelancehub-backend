@@ -13,7 +13,7 @@ export class EmailService {
 
   private createTransporter() {
     const emailConfig = this.configService.get('email');
-    
+
     if (emailConfig?.host) {
       // Production email configuration
       this.transporter = nodemailer.createTransport({
@@ -32,13 +32,17 @@ export class EmailService {
         port: 587,
         auth: {
           user: 'ethereal.user@ethereal.email',
-          pass: 'ethereal.pass'
-        }
+          pass: 'ethereal.pass',
+        },
       });
     }
   }
 
-  async sendEmailVerificationOtp(email: string, otp: string, firstName?: string): Promise<void> {
+  async sendEmailVerificationOtp(
+    email: string,
+    otp: string,
+    firstName?: string,
+  ): Promise<void> {
     const mailOptions = {
       from: this.configService.get('email.from', 'noreply@freelancehub.com'),
       to: email,
@@ -50,16 +54,25 @@ export class EmailService {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Email verification OTP sent to ${email}`);
     } catch (error) {
-      this.logger.error(`Failed to send email verification OTP to ${email}:`, error);
+      this.logger.error(
+        `Failed to send email verification OTP to ${email}:`,
+        error,
+      );
       // In development, log the OTP
       if (process.env.NODE_ENV === 'development') {
-        this.logger.log(`Development Mode - Email verification OTP for ${email}: ${otp}`);
+        this.logger.log(
+          `Development Mode - Email verification OTP for ${email}: ${otp}`,
+        );
       }
       throw error;
     }
   }
 
-  async sendPasswordResetOtp(email: string, otp: string, firstName?: string): Promise<void> {
+  async sendPasswordResetOtp(
+    email: string,
+    otp: string,
+    firstName?: string,
+  ): Promise<void> {
     const mailOptions = {
       from: this.configService.get('email.from', 'noreply@freelancehub.com'),
       to: email,
@@ -71,16 +84,24 @@ export class EmailService {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Password reset OTP sent to ${email}`);
     } catch (error) {
-      this.logger.error(`Failed to send password reset OTP to ${email}:`, error);
+      this.logger.error(
+        `Failed to send password reset OTP to ${email}:`,
+        error,
+      );
       // In development, log the OTP
       if (process.env.NODE_ENV === 'development') {
-        this.logger.log(`Development Mode - Password reset OTP for ${email}: ${otp}`);
+        this.logger.log(
+          `Development Mode - Password reset OTP for ${email}: ${otp}`,
+        );
       }
       throw error;
     }
   }
 
-  private getEmailVerificationTemplate(otp: string, firstName?: string): string {
+  private getEmailVerificationTemplate(
+    otp: string,
+    firstName?: string,
+  ): string {
     return `
     <!DOCTYPE html>
     <html>

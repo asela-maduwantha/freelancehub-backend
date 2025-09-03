@@ -1,10 +1,22 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, forwardRef, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Project, ProjectDocument } from '../../schemas/project.schema';
 import { Proposal, ProposalDocument } from '../../schemas/proposal.schema';
 import { User, UserDocument } from '../../schemas/user.schema';
-import { CreateProjectDto, UpdateProjectDto, ProjectFilterDto, SubmitProposalDto } from '../../dto/project.dto';
+import {
+  CreateProjectDto,
+  UpdateProjectDto,
+  ProjectFilterDto,
+  SubmitProposalDto,
+} from '../../dto/project.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -12,10 +24,14 @@ export class ProjectsService {
     @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
     @InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @Inject(forwardRef(() => 'ContractsService')) private contractsService?: any,
+    @Inject(forwardRef(() => 'ContractsService'))
+    private contractsService?: any,
   ) {}
 
-  async createProject(createProjectDto: CreateProjectDto, clientId: string): Promise<Project> {
+  async createProject(
+    createProjectDto: CreateProjectDto,
+    clientId: string,
+  ): Promise<Project> {
     const client = await this.userModel.findById(clientId);
     if (!client || !client.role.includes('client')) {
       throw new ForbiddenException('Only clients can create projects');
@@ -33,10 +49,16 @@ export class ProjectsService {
     const project = new this.projectModel(projectData);
     await project.save();
 
-    return project.populate('clientId', 'username email profile.firstName profile.lastName profile.company');
+    return project.populate(
+      'clientId',
+      'username email profile.firstName profile.lastName profile.company',
+    );
   }
 
-  async getProjects(filterDto: ProjectFilterDto, userId?: string): Promise<{
+  async getProjects(
+    filterDto: ProjectFilterDto,
+    userId?: string,
+  ): Promise<{
     projects: Project[];
     total: number;
     page: number;
@@ -109,7 +131,10 @@ export class ProjectsService {
     const [projects, total] = await Promise.all([
       this.projectModel
         .find(query)
-        .populate('clientId', 'username email profile.firstName profile.lastName profile.company profile.avatar')
+        .populate(
+          'clientId',
+          'username email profile.firstName profile.lastName profile.company profile.avatar',
+        )
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -132,8 +157,14 @@ export class ProjectsService {
 
     const project = await this.projectModel
       .findById(projectId)
-      .populate('clientId', 'username email profile.firstName profile.lastName profile.company profile.avatar')
-      .populate('assignedFreelancer', 'username email profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'clientId',
+        'username email profile.firstName profile.lastName profile.company profile.avatar',
+      )
+      .populate(
+        'assignedFreelancer',
+        'username email profile.firstName profile.lastName profile.avatar',
+      )
       .exec();
 
     if (!project) {
@@ -150,9 +181,13 @@ export class ProjectsService {
     return project;
   }
 
-  async updateProject(projectId: string, updateProjectDto: UpdateProjectDto, clientId: string): Promise<Project> {
+  async updateProject(
+    projectId: string,
+    updateProjectDto: UpdateProjectDto,
+    clientId: string,
+  ): Promise<Project> {
     const project = await this.projectModel.findById(projectId);
-    
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
@@ -162,24 +197,32 @@ export class ProjectsService {
     }
 
     if (project.status === 'in_progress' || project.status === 'completed') {
-      throw new BadRequestException('Cannot update project that is in progress or completed');
+      throw new BadRequestException(
+        'Cannot update project that is in progress or completed',
+      );
     }
 
     const updatedProject = await this.projectModel
       .findByIdAndUpdate(
         projectId,
         { ...updateProjectDto, updatedAt: new Date() },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       )
-      .populate('clientId', 'username email profile.firstName profile.lastName profile.company profile.avatar')
+      .populate(
+        'clientId',
+        'username email profile.firstName profile.lastName profile.company profile.avatar',
+      )
       .exec();
 
     return updatedProject!;
   }
 
-  async deleteProject(projectId: string, clientId: string): Promise<{ success: boolean }> {
+  async deleteProject(
+    projectId: string,
+    clientId: string,
+  ): Promise<{ success: boolean }> {
     const project = await this.projectModel.findById(projectId);
-    
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
@@ -189,11 +232,15 @@ export class ProjectsService {
     }
 
     if (project.status === 'in_progress') {
-      throw new BadRequestException('Cannot delete project that is in progress');
+      throw new BadRequestException(
+        'Cannot delete project that is in progress',
+      );
     }
 
     // Delete associated proposals
-    await this.proposalModel.deleteMany({ projectId: new Types.ObjectId(projectId) });
+    await this.proposalModel.deleteMany({
+      projectId: new Types.ObjectId(projectId),
+    });
 
     await this.projectModel.findByIdAndDelete(projectId);
 
@@ -202,21 +249,28 @@ export class ProjectsService {
 
   async getMyProjects(clientId: string, status?: string): Promise<Project[]> {
     const query: any = { clientId: new Types.ObjectId(clientId) };
-    
+
     if (status) {
       query.status = status;
     }
 
     return this.projectModel
       .find(query)
-      .populate('assignedFreelancer', 'username email profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'assignedFreelancer',
+        'username email profile.firstName profile.lastName profile.avatar',
+      )
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async submitProposal(projectId: string, proposalDto: SubmitProposalDto, freelancerId: string): Promise<Proposal> {
+  async submitProposal(
+    projectId: string,
+    proposalDto: SubmitProposalDto,
+    freelancerId: string,
+  ): Promise<Proposal> {
     const project = await this.projectModel.findById(projectId);
-    
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
@@ -226,7 +280,9 @@ export class ProjectsService {
     }
 
     if (project.clientId.toString() === freelancerId) {
-      throw new BadRequestException('You cannot submit a proposal to your own project');
+      throw new BadRequestException(
+        'You cannot submit a proposal to your own project',
+      );
     }
 
     const freelancer = await this.userModel.findById(freelancerId);
@@ -241,7 +297,9 @@ export class ProjectsService {
     });
 
     if (existingProposal) {
-      throw new BadRequestException('You have already submitted a proposal for this project');
+      throw new BadRequestException(
+        'You have already submitted a proposal for this project',
+      );
     }
 
     const proposalData = {
@@ -257,34 +315,49 @@ export class ProjectsService {
 
     // Increment proposal count - will use a proposal counter in the schema
     await this.projectModel.findByIdAndUpdate(projectId, {
-      $inc: { 'proposalsCount': 1 },
+      $inc: { proposalsCount: 1 },
     });
 
     return proposal.populate([
-      { path: 'freelancerId', select: 'username email profile.firstName profile.lastName profile.avatar' },
+      {
+        path: 'freelancerId',
+        select:
+          'username email profile.firstName profile.lastName profile.avatar',
+      },
       { path: 'projectId', select: 'title budget' },
     ]);
   }
 
-  async getProjectProposals(projectId: string, clientId: string): Promise<Proposal[]> {
+  async getProjectProposals(
+    projectId: string,
+    clientId: string,
+  ): Promise<Proposal[]> {
     const project = await this.projectModel.findById(projectId);
-    
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
 
     if (project.clientId.toString() !== clientId) {
-      throw new ForbiddenException('You can only view proposals for your own projects');
+      throw new ForbiddenException(
+        'You can only view proposals for your own projects',
+      );
     }
 
     return this.proposalModel
       .find({ projectId: new Types.ObjectId(projectId) })
-      .populate('freelancerId', 'username email profile.firstName profile.lastName profile.avatar freelancerProfile.hourlyRate freelancerProfile.bio')
+      .populate(
+        'freelancerId',
+        'username email profile.firstName profile.lastName profile.avatar freelancerProfile.hourlyRate freelancerProfile.bio',
+      )
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async acceptProposal(proposalId: string, clientId: string): Promise<{ success: boolean; contractId?: string }> {
+  async acceptProposal(
+    proposalId: string,
+    clientId: string,
+  ): Promise<{ success: boolean; contractId?: string }> {
     const proposal = await this.proposalModel
       .findById(proposalId)
       .populate('projectId')
@@ -296,7 +369,9 @@ export class ProjectsService {
 
     const project = proposal.projectId as any;
     if (project.clientId.toString() !== clientId) {
-      throw new ForbiddenException('You can only accept proposals for your own projects');
+      throw new ForbiddenException(
+        'You can only accept proposals for your own projects',
+      );
     }
 
     if (proposal.status !== 'pending') {
@@ -331,7 +406,7 @@ export class ProjectsService {
       {
         status: 'rejected',
         updatedAt: new Date(),
-      }
+      },
     );
 
     // Create contract automatically if ContractsService is available
@@ -339,10 +414,16 @@ export class ProjectsService {
     if (this.contractsService) {
       try {
         // Convert proposal to contract data
-        const contractData = await this.generateContractFromProposal(proposal, project);
-        const contract = await this.contractsService.createContract(contractData, clientId);
+        const contractData = await this.generateContractFromProposal(
+          proposal,
+          project,
+        );
+        const contract = await this.contractsService.createContract(
+          contractData,
+          clientId,
+        );
         contractId = contract._id.toString();
-        
+
         // Update project with contract reference
         await this.projectModel.findByIdAndUpdate(project._id, {
           contract: contract._id,
@@ -357,38 +438,49 @@ export class ProjectsService {
   }
 
   // Helper method to convert proposal to contract data
-  private async generateContractFromProposal(proposal: any, project: any): Promise<any> {
+  private async generateContractFromProposal(
+    proposal: any,
+    project: any,
+  ): Promise<any> {
     const contractTerms = {
       totalAmount: proposal.pricing.amount,
       currency: proposal.pricing.currency || 'USD',
       paymentType: proposal.pricing.type,
-      hourlyRate: proposal.pricing.type === 'hourly' ? proposal.pricing.amount : undefined,
+      hourlyRate:
+        proposal.pricing.type === 'hourly'
+          ? proposal.pricing.amount
+          : undefined,
       estimatedHours: proposal.pricing.estimatedHours,
       scope: project.description,
       deliverables: project.deliverables || [project.description],
-      deadline: proposal.timeline?.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+      deadline:
+        proposal.timeline?.deadline ||
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
       revisions: 2, // Default revisions
       additionalTerms: proposal.coverLetter || '',
     };
 
     // Convert timeline milestones to contract milestones
-    const milestones = proposal.timeline?.milestones?.length > 0 
-      ? proposal.timeline.milestones.map((milestone: any) => ({
-          title: milestone.title,
-          description: milestone.description,
-          amount: milestone.amount,
-          dueDate: milestone.deliveryDate || milestone.dueDate,
-          deliverables: [milestone.description],
-        }))
-      : [
-          {
-            title: 'Project Completion',
-            description: 'Complete all project deliverables',
-            amount: proposal.pricing.amount,
-            dueDate: proposal.timeline?.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            deliverables: [project.description],
-          }
-        ];
+    const milestones =
+      proposal.timeline?.milestones?.length > 0
+        ? proposal.timeline.milestones.map((milestone: any) => ({
+            title: milestone.title,
+            description: milestone.description,
+            amount: milestone.amount,
+            dueDate: milestone.deliveryDate || milestone.dueDate,
+            deliverables: [milestone.description],
+          }))
+        : [
+            {
+              title: 'Project Completion',
+              description: 'Complete all project deliverables',
+              amount: proposal.pricing.amount,
+              dueDate:
+                proposal.timeline?.deadline ||
+                new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              deliverables: [project.description],
+            },
+          ];
 
     return {
       projectId: project._id.toString(),
@@ -399,7 +491,10 @@ export class ProjectsService {
     };
   }
 
-  async rejectProposal(proposalId: string, clientId: string): Promise<{ success: boolean }> {
+  async rejectProposal(
+    proposalId: string,
+    clientId: string,
+  ): Promise<{ success: boolean }> {
     const proposal = await this.proposalModel
       .findById(proposalId)
       .populate('projectId')
@@ -411,7 +506,9 @@ export class ProjectsService {
 
     const project = proposal.projectId as any;
     if (project.clientId.toString() !== clientId) {
-      throw new ForbiddenException('You can only reject proposals for your own projects');
+      throw new ForbiddenException(
+        'You can only reject proposals for your own projects',
+      );
     }
 
     if (proposal.status !== 'pending') {
@@ -426,9 +523,12 @@ export class ProjectsService {
     return { success: true };
   }
 
-  async getFreelancerProposals(freelancerId: string, status?: string): Promise<Proposal[]> {
+  async getFreelancerProposals(
+    freelancerId: string,
+    status?: string,
+  ): Promise<Proposal[]> {
     const query: any = { freelancerId: new Types.ObjectId(freelancerId) };
-    
+
     if (status) {
       query.status = status;
     }
@@ -440,16 +540,20 @@ export class ProjectsService {
         path: 'projectId',
         populate: {
           path: 'clientId',
-          select: 'username email profile.firstName profile.lastName profile.company profile.avatar',
+          select:
+            'username email profile.firstName profile.lastName profile.company profile.avatar',
         },
       })
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async completeProject(projectId: string, clientId: string): Promise<{ success: boolean }> {
+  async completeProject(
+    projectId: string,
+    clientId: string,
+  ): Promise<{ success: boolean }> {
     const project = await this.projectModel.findById(projectId);
-    
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
@@ -459,7 +563,9 @@ export class ProjectsService {
     }
 
     if (project.status !== 'in_progress') {
-      throw new BadRequestException('Project must be in progress to be completed');
+      throw new BadRequestException(
+        'Project must be in progress to be completed',
+      );
     }
 
     await this.projectModel.findByIdAndUpdate(projectId, {
@@ -473,13 +579,15 @@ export class ProjectsService {
 
   async getProjectAnalytics(projectId: string, clientId: string): Promise<any> {
     const project = await this.projectModel.findById(projectId);
-    
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
 
     if (project.clientId.toString() !== clientId) {
-      throw new ForbiddenException('You can only view analytics for your own projects');
+      throw new ForbiddenException(
+        'You can only view analytics for your own projects',
+      );
     }
 
     const proposalsCount = await this.proposalModel.countDocuments({
@@ -513,12 +621,13 @@ export class ProjectsService {
     projectType?: 'fixed' | 'hourly';
     skills?: string[];
   }) {
-    const { page, limit, category, minBudget, maxBudget, projectType, skills } = filters;
+    const { page, limit, category, minBudget, maxBudget, projectType, skills } =
+      filters;
     const skip = (page - 1) * limit;
 
     const query: any = {
       status: 'active',
-      visibility: 'public'
+      visibility: 'public',
     };
 
     if (category) {
@@ -536,30 +645,33 @@ export class ProjectsService {
     }
 
     if (skills && skills.length > 0) {
-      query.skills = { $in: skills.map(skill => new RegExp(skill, 'i')) };
+      query.skills = { $in: skills.map((skill) => new RegExp(skill, 'i')) };
     }
 
     const [projects, total] = await Promise.all([
       this.projectModel
         .find(query)
-        .populate('clientId', 'username profile.firstName profile.lastName profile.avatar profile.company profile.location')
+        .populate(
+          'clientId',
+          'username profile.firstName profile.lastName profile.avatar profile.company profile.location',
+        )
         .select('-proposalDetails -clientNotes -attachments')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.projectModel.countDocuments(query)
+      this.projectModel.countDocuments(query),
     ]);
 
     return {
-      projects: projects.map(project => ({
+      projects: projects.map((project) => ({
         ...project,
-        proposalCount: Math.floor(Math.random() * 20), 
-        timePosted: this.calculateTimeAgo(project.createdAt)
+        proposalCount: Math.floor(Math.random() * 20),
+        timePosted: this.calculateTimeAgo(project.createdAt),
       })),
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
@@ -579,7 +691,7 @@ export class ProjectsService {
       freelancer.freelancerProfile = {
         bookmarkedProjects: [],
         skills: [],
-        categories: []
+        categories: [],
       };
     }
 
@@ -587,8 +699,14 @@ export class ProjectsService {
       freelancer.freelancerProfile.bookmarkedProjects = [];
     }
 
-    if (!freelancer.freelancerProfile.bookmarkedProjects.includes(new Types.ObjectId(projectId))) {
-      freelancer.freelancerProfile.bookmarkedProjects.push(new Types.ObjectId(projectId));
+    if (
+      !freelancer.freelancerProfile.bookmarkedProjects.includes(
+        new Types.ObjectId(projectId),
+      )
+    ) {
+      freelancer.freelancerProfile.bookmarkedProjects.push(
+        new Types.ObjectId(projectId),
+      );
       await freelancer.save();
     }
 
@@ -602,9 +720,10 @@ export class ProjectsService {
     }
 
     if (freelancer.freelancerProfile?.bookmarkedProjects) {
-      freelancer.freelancerProfile.bookmarkedProjects = freelancer.freelancerProfile.bookmarkedProjects.filter(
-        (id: any) => !id.equals(new Types.ObjectId(projectId))
-      );
+      freelancer.freelancerProfile.bookmarkedProjects =
+        freelancer.freelancerProfile.bookmarkedProjects.filter(
+          (id: any) => !id.equals(new Types.ObjectId(projectId)),
+        );
       await freelancer.save();
     }
 
@@ -624,37 +743,40 @@ export class ProjectsService {
     // Build recommendation query
     const query: any = {
       status: 'active',
-      clientId: { $ne: new Types.ObjectId(freelancerId) }
+      clientId: { $ne: new Types.ObjectId(freelancerId) },
     };
 
     // Match skills or categories
     if (userSkills.length > 0 || userCategories.length > 0) {
       query.$or = [];
-      
+
       if (userSkills.length > 0) {
-        query.$or.push({ 
-          skills: { $in: userSkills.map(skill => new RegExp(skill, 'i')) } 
+        query.$or.push({
+          skills: { $in: userSkills.map((skill) => new RegExp(skill, 'i')) },
         });
       }
-      
+
       if (userCategories.length > 0) {
-        query.$or.push({ 
-          category: { $in: userCategories } 
+        query.$or.push({
+          category: { $in: userCategories },
         });
       }
     }
 
     const projects = await this.projectModel
       .find(query)
-      .populate('clientId', 'username profile.firstName profile.lastName profile.avatar profile.company')
+      .populate(
+        'clientId',
+        'username profile.firstName profile.lastName profile.avatar profile.company',
+      )
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
 
-    return projects.map(project => ({
+    return projects.map((project) => ({
       ...project,
       matchScore: this.calculateMatchScore(project, userSkills, userCategories),
-      proposalCount: Math.floor(Math.random() * 15)
+      proposalCount: Math.floor(Math.random() * 15),
     }));
   }
 
@@ -674,8 +796,8 @@ export class ProjectsService {
           'Frontend Development',
           'Backend API Development',
           'Database Integration',
-          'Testing and Deployment'
-        ]
+          'Testing and Deployment',
+        ],
       },
       {
         id: 'mobile-app-template',
@@ -690,8 +812,8 @@ export class ProjectsService {
           'Core Functionality Development',
           'API Integration',
           'Testing on Multiple Devices',
-          'App Store Submission'
-        ]
+          'App Store Submission',
+        ],
       },
       {
         id: 'website-template',
@@ -706,23 +828,28 @@ export class ProjectsService {
           'Homepage Development',
           'Content Pages',
           'Contact Forms & Integration',
-          'SEO Optimization'
-        ]
-      }
+          'SEO Optimization',
+        ],
+      },
     ];
 
     if (category) {
-      return templates.filter(template => template.category === category);
+      return templates.filter((template) => template.category === category);
     }
 
     return templates;
   }
 
   // Invite freelancer to project
-  async inviteFreelancer(projectId: string, freelancerId: string, clientId: string, message?: string) {
+  async inviteFreelancer(
+    projectId: string,
+    freelancerId: string,
+    clientId: string,
+    message?: string,
+  ) {
     const [project, freelancer] = await Promise.all([
       this.projectModel.findById(projectId),
-      this.userModel.findById(freelancerId)
+      this.userModel.findById(freelancerId),
     ]);
 
     if (!project) {
@@ -730,7 +857,9 @@ export class ProjectsService {
     }
 
     if (project.clientId.toString() !== clientId) {
-      throw new ForbiddenException('You can only invite freelancers to your own projects');
+      throw new ForbiddenException(
+        'You can only invite freelancers to your own projects',
+      );
     }
 
     if (!freelancer || !freelancer.role.includes('freelancer')) {
@@ -741,11 +870,13 @@ export class ProjectsService {
     const existingInvitation = await this.proposalModel.findOne({
       projectId: new Types.ObjectId(projectId),
       freelancerId: new Types.ObjectId(freelancerId),
-      type: 'invitation'
+      type: 'invitation',
     });
 
     if (existingInvitation) {
-      throw new BadRequestException('Freelancer already invited to this project');
+      throw new BadRequestException(
+        'Freelancer already invited to this project',
+      );
     }
 
     // Create invitation record
@@ -755,37 +886,43 @@ export class ProjectsService {
       type: 'invitation',
       status: 'pending',
       invitationMessage: message,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     await invitation.save();
 
     // You might want to send a notification here
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: 'Freelancer invited successfully',
-      invitationId: invitation._id 
+      invitationId: invitation._id,
     };
   }
 
   // Helper methods
-  private calculateMatchScore(project: any, userSkills: string[], userCategories: string[]): number {
+  private calculateMatchScore(
+    project: any,
+    userSkills: string[],
+    userCategories: string[],
+  ): number {
     let score = 0;
-    
+
     // Category match
     if (userCategories.includes(project.category)) {
       score += 40;
     }
-    
+
     // Skills match
     const projectSkills = project.skills || [];
-    const matchingSkills = userSkills.filter(skill => 
-      projectSkills.some((ps: string) => ps.toLowerCase().includes(skill.toLowerCase()))
+    const matchingSkills = userSkills.filter((skill) =>
+      projectSkills.some((ps: string) =>
+        ps.toLowerCase().includes(skill.toLowerCase()),
+      ),
     );
-    
+
     score += (matchingSkills.length / Math.max(userSkills.length, 1)) * 60;
-    
+
     return Math.min(score, 100);
   }
 
@@ -793,7 +930,7 @@ export class ProjectsService {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days === 0) return 'Today';
     if (days === 1) return '1 day ago';
     if (days < 7) return `${days} days ago`;

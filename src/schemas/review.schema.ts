@@ -37,7 +37,10 @@ export class Review {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   revieweeId: Types.ObjectId;
 
-  @Prop({ enum: ['client_to_freelancer', 'freelancer_to_client'], required: true })
+  @Prop({
+    enum: ['client_to_freelancer', 'freelancer_to_client'],
+    required: true,
+  })
   type: string;
 
   @Prop({ required: true, min: 1, max: 5 })
@@ -131,54 +134,60 @@ export const ReviewSchema = SchemaFactory.createForClass(Review);
 // Indexes
 ReviewSchema.index({ contractId: 1, type: 1 }, { unique: true });
 ReviewSchema.index({ reviewerId: 1, createdAt: -1 });
-ReviewSchema.index({ revieweeId: 1, moderationStatus: 1, isPublic: 1, createdAt: -1 });
+ReviewSchema.index({
+  revieweeId: 1,
+  moderationStatus: 1,
+  isPublic: 1,
+  createdAt: -1,
+});
 ReviewSchema.index({ overallRating: -1, createdAt: -1 });
 ReviewSchema.index({ isFeatured: 1, featuredUntil: 1 });
 ReviewSchema.index({ tags: 1 });
 ReviewSchema.index({ helpfulVotes: -1 });
 
 // Virtual for average criteria rating
-ReviewSchema.virtual('averageCriteriaRating').get(function() {
+ReviewSchema.virtual('averageCriteriaRating').get(function () {
   const criteria = this.criteria;
   const ratings = [
     criteria.communication,
     criteria.quality,
     criteria.timeliness,
-    criteria.professionalism
+    criteria.professionalism,
   ];
-  
+
   if (criteria.expertise) ratings.push(criteria.expertise);
   if (criteria.value) ratings.push(criteria.value);
-  
+
   return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
 });
 
 // Virtual for helpfulness ratio
-ReviewSchema.virtual('helpfulnessRatio').get(function() {
+ReviewSchema.virtual('helpfulnessRatio').get(function () {
   const total = this.helpfulVotes + this.notHelpfulVotes;
   return total > 0 ? this.helpfulVotes / total : 0;
 });
 
 // Pre-save middleware to set project context
-ReviewSchema.pre('save', async function(next) {
+ReviewSchema.pre('save', async function (next) {
   if (this.isNew) {
     try {
       const Contract = this.db.model('Contract');
       const Project = this.db.model('Project');
-      
+
       const contract = await Contract.findById(this.contractId).populate({
         path: 'projectId',
-        select: 'title category'
+        select: 'title category',
       });
-      
+
       if (contract && contract.projectId) {
         this.projectTitle = contract.projectId.title;
         this.projectCategory = contract.projectId.category;
         this.contractValue = contract.terms.totalAmount;
-        
+
         if (contract.startDate && contract.endDate) {
           const duration = Math.ceil(
-            (contract.endDate.getTime() - contract.startDate.getTime()) / (1000 * 60 * 60 * 24)
+            (contract.endDate.getTime() - contract.startDate.getTime()) /
+              (1000 * 60 * 60 * 24),
           );
           this.contractDuration = duration;
         }

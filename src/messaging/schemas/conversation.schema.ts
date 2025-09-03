@@ -24,10 +24,10 @@ export class Conversation extends Document {
   @Prop({ type: Object, default: {} })
   unreadCounts: { [userId: string]: number };
 
-  @Prop({ 
-    type: String, 
-    enum: ['project', 'support', 'general'], 
-    default: 'project' 
+  @Prop({
+    type: String,
+    enum: ['project', 'support', 'general'],
+    default: 'project',
   })
   type: string;
 

@@ -27,7 +27,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
@@ -37,7 +37,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else if (exception instanceof MongoError) {
       // MongoDB specific errors
       status = HttpStatus.BAD_REQUEST;
-      
+
       if (exception.code === 11000) {
         // Duplicate key error
         const field = Object.keys((exception as any).keyValue || {})[0];
@@ -45,7 +45,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       } else {
         message = 'Database error occurred';
       }
-      
+
       details = {
         code: exception.code,
         name: exception.name,
@@ -54,12 +54,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       // Mongoose validation errors
       status = HttpStatus.BAD_REQUEST;
       message = 'Validation failed';
-      
+
       const validationErrors: Record<string, string> = {};
-      Object.keys(exception.errors).forEach(key => {
+      Object.keys(exception.errors).forEach((key) => {
         validationErrors[key] = exception.errors[key].message;
       });
-      
+
       details = {
         name: exception.name,
         errors: validationErrors,
@@ -68,7 +68,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       // Mongoose cast errors (invalid ObjectId, etc.)
       status = HttpStatus.BAD_REQUEST;
       message = `Invalid ${exception.path}: ${exception.value}`;
-      
+
       details = {
         name: exception.name,
         path: exception.path,
@@ -79,7 +79,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = exception.message;
       details = {
         name: exception.name,
-        stack: process.env.NODE_ENV === 'development' ? exception.stack : undefined,
+        stack:
+          process.env.NODE_ENV === 'development' ? exception.stack : undefined,
       };
     }
 
@@ -92,7 +93,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
       ...(details && { details }),
       ...(process.env.NODE_ENV === 'development' && {
-        exception: exception instanceof Error ? exception.stack : String(exception),
+        exception:
+          exception instanceof Error ? exception.stack : String(exception),
       }),
     };
 

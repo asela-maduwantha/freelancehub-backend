@@ -78,7 +78,10 @@ export class Proposal {
   @Prop({ type: [ProposalAttachment] })
   attachments: ProposalAttachment[];
 
-  @Prop({ enum: ['pending', 'accepted', 'rejected', 'withdrawn'], default: 'pending' })
+  @Prop({
+    enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
+    default: 'pending',
+  })
   status: string;
 
   @Prop()
@@ -120,10 +123,10 @@ export class Proposal {
       clientEngagement: {
         views: { type: Number, default: 0 },
         messages: { type: Number, default: 0 },
-        lastInteraction: Date
-      }
+        lastInteraction: Date,
+      },
     },
-    default: {}
+    default: {},
   })
   analytics: {
     submittedAt: Date;
@@ -138,11 +141,13 @@ export class Proposal {
 
   // Questions and answers
   @Prop({
-    type: [{
-      question: { type: String, required: true },
-      answer: { type: String, required: true },
-      askedAt: { type: Date, default: Date.now }
-    }]
+    type: [
+      {
+        question: { type: String, required: true },
+        answer: { type: String, required: true },
+        askedAt: { type: Date, default: Date.now },
+      },
+    ],
   })
   questionsAndAnswers: {
     question: string;
@@ -157,8 +162,8 @@ export class Proposal {
       experienceMatch: { type: Number, min: 0, max: 100 },
       budgetMatch: { type: Number, min: 0, max: 100 },
       timelineMatch: { type: Number, min: 0, max: 100 },
-      overallMatch: { type: Number, min: 0, max: 100 }
-    }
+      overallMatch: { type: Number, min: 0, max: 100 },
+    },
   })
   matchScore?: {
     skillsMatch: number;
@@ -179,15 +184,17 @@ ProposalSchema.index({ status: 1, createdAt: -1 });
 ProposalSchema.index({ isFeatured: 1, featuredUntil: 1 });
 
 // Pre-save middleware to calculate response time
-ProposalSchema.pre('save', async function(next) {
+ProposalSchema.pre('save', async function (next) {
   if (this.isNew) {
     try {
       const Project = this.db.model('Project');
       const project = await Project.findById(this.projectId);
-      
+
       if (project && project.publishedAt) {
         const responseTime = Date.now() - project.publishedAt.getTime();
-        this.analytics.responseTime = Math.round(responseTime / (1000 * 60 * 60)); // in hours
+        this.analytics.responseTime = Math.round(
+          responseTime / (1000 * 60 * 60),
+        ); // in hours
       }
     } catch (error) {
       console.error('Error calculating response time:', error);
@@ -197,20 +204,20 @@ ProposalSchema.pre('save', async function(next) {
 });
 
 // Pre-save middleware to calculate competitiveness
-ProposalSchema.pre('save', async function(next) {
+ProposalSchema.pre('save', async function (next) {
   if (this.isNew || this.isModified('pricing.amount')) {
     try {
       const Proposal = this.constructor as any;
-      const proposals = await Proposal.find({ 
-        projectId: this.projectId, 
-        status: 'pending' 
+      const proposals = await Proposal.find({
+        projectId: this.projectId,
+        status: 'pending',
       }).select('pricing.amount');
-      
+
       if (proposals.length > 0) {
-        const amounts = proposals.map(p => p.pricing.amount);
+        const amounts = proposals.map((p) => p.pricing.amount);
         const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
         const minAmount = Math.min(...amounts);
-        
+
         // Calculate competitiveness (lower bid = more competitive)
         let competitiveness = 50; // baseline
         if (this.pricing.amount <= minAmount) {
@@ -222,7 +229,7 @@ ProposalSchema.pre('save', async function(next) {
         } else {
           competitiveness = 10;
         }
-        
+
         this.analytics.competitiveness = competitiveness;
       }
     } catch (error) {

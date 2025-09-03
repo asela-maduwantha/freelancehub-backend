@@ -21,7 +21,9 @@ export class UnhandledExceptionsService implements OnApplicationBootstrap {
 
       // In development, you might want to crash the process
       if (process.env.NODE_ENV === 'development') {
-        console.error('\n💥 Unhandled Promise Rejection - Server will continue running but this should be fixed!\n');
+        console.error(
+          '\n💥 Unhandled Promise Rejection - Server will continue running but this should be fixed!\n',
+        );
       }
     });
 
@@ -67,7 +69,7 @@ export class UnhandledExceptionsService implements OnApplicationBootstrap {
 
   private gracefulShutdown() {
     this.logger.log('🔄 Performing graceful shutdown...');
-    
+
     // Give some time for ongoing requests to complete
     setTimeout(() => {
       this.logger.log('👋 Graceful shutdown completed');

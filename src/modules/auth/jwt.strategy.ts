@@ -30,7 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload): Promise<UserDocument> {
     const { sub: userId } = payload;
-    
+
     const user = await this.userModel
       .findById(userId)
       .select('-refreshTokens -passkeys.publicKey')

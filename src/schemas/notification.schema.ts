@@ -75,9 +75,9 @@ export class Notification {
       'review_received',
       'account_verification',
       'security_alert',
-      'system_announcement'
+      'system_announcement',
     ],
-    required: true
+    required: true,
   })
   type: string;
 
@@ -133,11 +133,14 @@ export const NotificationSchema = SchemaFactory.createForClass(Notification);
 NotificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
 NotificationSchema.index({ userId: 1, type: 1, createdAt: -1 });
 NotificationSchema.index({ priority: 1, isRead: 1 });
-NotificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, sparse: true });
+NotificationSchema.index(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0, sparse: true },
+);
 NotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 2592000 }); // 30 days
 
 // Pre-save middleware to mark as read
-NotificationSchema.pre('save', function(next) {
+NotificationSchema.pre('save', function (next) {
   if (this.isModified('isRead') && this.isRead && !this.readAt) {
     this.readAt = new Date();
   }

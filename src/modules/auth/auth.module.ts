@@ -17,15 +17,14 @@ import { EmailService } from '../../services/email.service';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.secret') || 'fallback-jwt-secret',
+        secret:
+          configService.get<string>('jwt.secret') || 'fallback-jwt-secret',
         signOptions: {
           expiresIn: configService.get<string>('jwt.expiresIn') || '15m',
         },
       }),
     }),
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-    ]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy, EmailService],

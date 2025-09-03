@@ -1,21 +1,39 @@
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message } from './schemas/message.schema';
 import { Conversation } from './schemas/conversation.schema';
-import { CreateMessageDto, UpdateMessageDto, CreateConversationDto, MessageQueryDto } from './dto/messaging.dto';
+import {
+  CreateMessageDto,
+  UpdateMessageDto,
+  CreateConversationDto,
+  MessageQueryDto,
+} from './dto/messaging.dto';
 import { User } from '../schemas/user.schema';
 
 @Injectable()
 export class MessagingService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
-    @InjectModel(Conversation.name) private conversationModel: Model<Conversation>,
+    @InjectModel(Conversation.name)
+    private conversationModel: Model<Conversation>,
     @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async createMessage(senderId: string, createMessageDto: CreateMessageDto) {
-    const { receiverId, content, projectId, type = 'text', attachments, metadata } = createMessageDto;
+    const {
+      receiverId,
+      content,
+      projectId,
+      type = 'text',
+      attachments,
+      metadata,
+    } = createMessageDto;
 
     // Validate receiver exists
     const receiver = await this.userModel.findById(receiverId);
@@ -24,7 +42,10 @@ export class MessagingService {
     }
 
     // Find or create conversation
-    let conversation = await this.findOrCreateConversation([senderId, receiverId], projectId);
+    const conversation = await this.findOrCreateConversation(
+      [senderId, receiverId],
+      projectId,
+    );
 
     // Create the message
     const message = new this.messageModel({
@@ -40,37 +61,51 @@ export class MessagingService {
     const savedMessage = await message.save();
 
     // Update conversation
-    await this.updateConversation(conversation._id as string, savedMessage._id as string, receiverId);
+    await this.updateConversation(
+      conversation._id as string,
+      savedMessage._id as string,
+      receiverId,
+    );
 
     return this.populateMessage(savedMessage);
   }
 
   async getMessages(userId: string, query: MessageQueryDto) {
-    const { page = 1, limit = 20, conversationId, projectId, unreadOnly } = query;
+    const {
+      page = 1,
+      limit = 20,
+      conversationId,
+      projectId,
+      unreadOnly,
+    } = query;
     const skip = (page - 1) * limit;
 
     let filter: any = {
       $or: [
         { senderId: new Types.ObjectId(userId) },
-        { receiverId: new Types.ObjectId(userId) }
+        { receiverId: new Types.ObjectId(userId) },
       ],
-      isDeleted: false
+      isDeleted: false,
     };
 
     if (conversationId) {
-      const conversation = await this.conversationModel.findById(conversationId);
-      if (!conversation || !conversation.participants.includes(new Types.ObjectId(userId))) {
+      const conversation =
+        await this.conversationModel.findById(conversationId);
+      if (
+        !conversation ||
+        !conversation.participants.includes(new Types.ObjectId(userId))
+      ) {
         throw new ForbiddenException('Access denied to this conversation');
       }
-      
+
       filter = {
         $or: [
-          { 
+          {
             senderId: { $in: conversation.participants },
-            receiverId: { $in: conversation.participants }
-          }
+            receiverId: { $in: conversation.participants },
+          },
         ],
-        isDeleted: false
+        isDeleted: false,
       };
     }
 
@@ -88,8 +123,14 @@ export class MessagingService {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('senderId', 'username profile.firstName profile.lastName profile.avatar')
-      .populate('receiverId', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'senderId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
+      .populate(
+        'receiverId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('projectId', 'title status')
       .exec();
 
@@ -101,8 +142,8 @@ export class MessagingService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -112,19 +153,22 @@ export class MessagingService {
     const conversations = await this.conversationModel
       .find({
         participants: new Types.ObjectId(userId),
-        isArchived: false
+        isArchived: false,
       })
       .sort({ lastActivity: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('participants', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'participants',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('lastMessage')
       .populate('projectId', 'title status')
       .exec();
 
     const total = await this.conversationModel.countDocuments({
       participants: new Types.ObjectId(userId),
-      isArchived: false
+      isArchived: false,
     });
 
     return {
@@ -133,20 +177,22 @@ export class MessagingService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
   async markAsRead(userId: string, messageId: string) {
     const message = await this.messageModel.findById(messageId);
-    
+
     if (!message) {
       throw new NotFoundException('Message not found');
     }
 
     if (message.receiverId.toString() !== userId) {
-      throw new ForbiddenException('You can only mark your own received messages as read');
+      throw new ForbiddenException(
+        'You can only mark your own received messages as read',
+      );
     }
 
     message.isRead = true;
@@ -160,8 +206,11 @@ export class MessagingService {
 
   async markConversationAsRead(userId: string, conversationId: string) {
     const conversation = await this.conversationModel.findById(conversationId);
-    
-    if (!conversation || !conversation.participants.includes(new Types.ObjectId(userId))) {
+
+    if (
+      !conversation ||
+      !conversation.participants.includes(new Types.ObjectId(userId))
+    ) {
       throw new ForbiddenException('Access denied to this conversation');
     }
 
@@ -170,14 +219,14 @@ export class MessagingService {
       {
         receiverId: new Types.ObjectId(userId),
         $or: [
-          { 
+          {
             senderId: { $in: conversation.participants },
-            receiverId: { $in: conversation.participants }
-          }
+            receiverId: { $in: conversation.participants },
+          },
         ],
-        isRead: false
+        isRead: false,
       },
-      { isRead: true }
+      { isRead: true },
     );
 
     // Reset unread count for this user
@@ -187,9 +236,13 @@ export class MessagingService {
     return { message: 'Conversation marked as read' };
   }
 
-  async updateMessage(userId: string, messageId: string, updateMessageDto: UpdateMessageDto) {
+  async updateMessage(
+    userId: string,
+    messageId: string,
+    updateMessageDto: UpdateMessageDto,
+  ) {
     const message = await this.messageModel.findById(messageId);
-    
+
     if (!message) {
       throw new NotFoundException('Message not found');
     }
@@ -214,7 +267,7 @@ export class MessagingService {
 
   async deleteMessage(userId: string, messageId: string) {
     const message = await this.messageModel.findById(messageId);
-    
+
     if (!message) {
       throw new NotFoundException('Message not found');
     }
@@ -230,8 +283,16 @@ export class MessagingService {
     return { message: 'Message deleted successfully' };
   }
 
-  async createConversation(userId: string, createConversationDto: CreateConversationDto) {
-    const { participants, projectId, title, type = 'project' } = createConversationDto;
+  async createConversation(
+    userId: string,
+    createConversationDto: CreateConversationDto,
+  ) {
+    const {
+      participants,
+      projectId,
+      title,
+      type = 'project',
+    } = createConversationDto;
 
     // Ensure current user is in participants
     if (!participants.includes(userId)) {
@@ -246,11 +307,11 @@ export class MessagingService {
 
     // Check if conversation already exists
     const existingConversation = await this.conversationModel.findOne({
-      participants: { 
-        $all: participants.map(id => new Types.ObjectId(id)),
-        $size: participants.length
+      participants: {
+        $all: participants.map((id) => new Types.ObjectId(id)),
+        $size: participants.length,
       },
-      projectId: projectId ? new Types.ObjectId(projectId) : { $exists: false }
+      projectId: projectId ? new Types.ObjectId(projectId) : { $exists: false },
     });
 
     if (existingConversation) {
@@ -258,11 +319,11 @@ export class MessagingService {
     }
 
     const conversation = new this.conversationModel({
-      participants: participants.map(id => new Types.ObjectId(id)),
+      participants: participants.map((id) => new Types.ObjectId(id)),
       projectId: projectId ? new Types.ObjectId(projectId) : undefined,
       title,
       type,
-      unreadCounts: participants.reduce((acc, id) => ({ ...acc, [id]: 0 }), {})
+      unreadCounts: participants.reduce((acc, id) => ({ ...acc, [id]: 0 }), {}),
     });
 
     const savedConversation = await conversation.save();
@@ -271,8 +332,11 @@ export class MessagingService {
 
   async archiveConversation(userId: string, conversationId: string) {
     const conversation = await this.conversationModel.findById(conversationId);
-    
-    if (!conversation || !conversation.participants.includes(new Types.ObjectId(userId))) {
+
+    if (
+      !conversation ||
+      !conversation.participants.includes(new Types.ObjectId(userId))
+    ) {
       throw new ForbiddenException('Access denied to this conversation');
     }
 
@@ -286,18 +350,18 @@ export class MessagingService {
     const unreadMessages = await this.messageModel.countDocuments({
       receiverId: new Types.ObjectId(userId),
       isRead: false,
-      isDeleted: false
+      isDeleted: false,
     });
 
     const unreadConversations = await this.conversationModel.countDocuments({
       participants: new Types.ObjectId(userId),
       [`unreadCounts.${userId}`]: { $gt: 0 },
-      isArchived: false
+      isArchived: false,
     });
 
     return {
       unreadMessages,
-      unreadConversations
+      unreadConversations,
     };
   }
 
@@ -306,15 +370,21 @@ export class MessagingService {
       .find({
         $or: [
           { senderId: new Types.ObjectId(userId) },
-          { receiverId: new Types.ObjectId(userId) }
+          { receiverId: new Types.ObjectId(userId) },
         ],
         content: { $regex: searchTerm, $options: 'i' },
-        isDeleted: false
+        isDeleted: false,
       })
       .sort({ createdAt: -1 })
       .limit(limit)
-      .populate('senderId', 'username profile.firstName profile.lastName profile.avatar')
-      .populate('receiverId', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'senderId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
+      .populate(
+        'receiverId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('projectId', 'title')
       .exec();
 
@@ -322,15 +392,18 @@ export class MessagingService {
   }
 
   // Private helper methods
-  private async findOrCreateConversation(participants: string[], projectId?: string) {
-    const participantIds = participants.map(id => new Types.ObjectId(id));
-    
+  private async findOrCreateConversation(
+    participants: string[],
+    projectId?: string,
+  ) {
+    const participantIds = participants.map((id) => new Types.ObjectId(id));
+
     let conversation = await this.conversationModel.findOne({
-      participants: { 
+      participants: {
         $all: participantIds,
-        $size: participants.length
+        $size: participants.length,
       },
-      projectId: projectId ? new Types.ObjectId(projectId) : { $exists: false }
+      projectId: projectId ? new Types.ObjectId(projectId) : { $exists: false },
     });
 
     if (!conversation) {
@@ -338,7 +411,10 @@ export class MessagingService {
         participants: participantIds,
         projectId: projectId ? new Types.ObjectId(projectId) : undefined,
         type: projectId ? 'project' : 'general',
-        unreadCounts: participants.reduce((acc, id) => ({ ...acc, [id]: 0 }), {})
+        unreadCounts: participants.reduce(
+          (acc, id) => ({ ...acc, [id]: 0 }),
+          {},
+        ),
       });
       await conversation.save();
     }
@@ -346,24 +422,33 @@ export class MessagingService {
     return conversation;
   }
 
-  private async updateConversation(conversationId: string, lastMessageId: string, receiverId: string) {
+  private async updateConversation(
+    conversationId: string,
+    lastMessageId: string,
+    receiverId: string,
+  ) {
     await this.conversationModel.findByIdAndUpdate(conversationId, {
       lastMessage: new Types.ObjectId(lastMessageId),
       lastActivity: new Date(),
-      $inc: { [`unreadCounts.${receiverId}`]: 1 }
+      $inc: { [`unreadCounts.${receiverId}`]: 1 },
     });
   }
 
-  private async updateUnreadCount(senderId: string, receiverId: string, increment: number) {
+  private async updateUnreadCount(
+    senderId: string,
+    receiverId: string,
+    increment: number,
+  ) {
     const conversation = await this.conversationModel.findOne({
-      participants: { 
-        $all: [new Types.ObjectId(senderId), new Types.ObjectId(receiverId)]
-      }
+      participants: {
+        $all: [new Types.ObjectId(senderId), new Types.ObjectId(receiverId)],
+      },
     });
 
     if (conversation) {
-      conversation.unreadCounts[receiverId] = Math.max(0, 
-        (conversation.unreadCounts[receiverId] || 0) + increment
+      conversation.unreadCounts[receiverId] = Math.max(
+        0,
+        (conversation.unreadCounts[receiverId] || 0) + increment,
       );
       await conversation.save();
     }
@@ -372,8 +457,14 @@ export class MessagingService {
   private populateMessage(message: any) {
     return this.messageModel
       .findById(message._id)
-      .populate('senderId', 'username profile.firstName profile.lastName profile.avatar')
-      .populate('receiverId', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'senderId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
+      .populate(
+        'receiverId',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('projectId', 'title status')
       .exec();
   }
@@ -381,7 +472,10 @@ export class MessagingService {
   private populateConversation(conversation: any) {
     return this.conversationModel
       .findById(conversation._id)
-      .populate('participants', 'username profile.firstName profile.lastName profile.avatar')
+      .populate(
+        'participants',
+        'username profile.firstName profile.lastName profile.avatar',
+      )
       .populate('lastMessage')
       .populate('projectId', 'title status')
       .exec();

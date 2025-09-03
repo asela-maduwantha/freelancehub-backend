@@ -36,7 +36,9 @@ export class DatabaseHealthService implements OnModuleInit {
     });
 
     this.connection.on('reconnectFailed', () => {
-      this.logger.error('🚨 MongoDB reconnection failed - Check your database connection');
+      this.logger.error(
+        '🚨 MongoDB reconnection failed - Check your database connection',
+      );
     });
 
     // Initial connection state
